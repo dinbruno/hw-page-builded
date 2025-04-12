@@ -88,7 +88,10 @@ export function useLoginPage() {
 
         try {
           // Usar a rota de API que verifica o domínio do lado do servidor
-          const response = await fetch("/api/domain/check", {
+          const apiUrl = "/api/domain/check"; // Garantir que não há barra final
+          console.log(`Verificando domínio via API: ${apiUrl}`);
+
+          const response = await fetch(apiUrl, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -101,7 +104,37 @@ export function useLoginPage() {
           });
 
           if (!response.ok) {
-            console.warn(`Erro na verificação do domínio. Status: ${response.status}`);
+            console.warn(`Erro na verificação do domínio. Status: ${response.status} (${response.statusText})`);
+
+            // Tente novamente sem a barra final, caso esse seja o problema
+            if (response.status === 405 && apiUrl.endsWith("/")) {
+              const alternativeUrl = apiUrl.slice(0, -1);
+              console.log(`Tentando URL alternativa: ${alternativeUrl}`);
+
+              const alternativeResponse = await fetch(alternativeUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  workspaceName: workspace.name || workspace.slug,
+                  tenantId: tenantId,
+                }),
+                cache: "no-store",
+              });
+
+              if (alternativeResponse.ok) {
+                const domainResult = await alternativeResponse.json();
+                lastDomainResult = domainResult;
+
+                if (domainResult.success) {
+                  console.log("Domínio verificado com sucesso (URL alternativa):", domainResult.url);
+                  domainReady = true;
+                  break;
+                }
+              }
+            }
+
             // Aguardar 2 segundos antes da próxima tentativa
             await new Promise((resolve) => setTimeout(resolve, 2000));
             continue;
