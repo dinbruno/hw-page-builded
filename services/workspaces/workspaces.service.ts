@@ -2,7 +2,7 @@ import type { CreateWorkspaceInput, UpdateWorkspaceInput, GetWorkspaceParams, Ge
 import { getHeaders } from "../../utils/getHeaders";
 import { mockWorkspaces } from "../mock";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = process.env.API_CORE_URL_PROD;
 const IS_DEVELOPMENT = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_NODE_ENV === "development";
 
 export class WorkspaceService {
