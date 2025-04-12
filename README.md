@@ -35,47 +35,55 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-## Sistema Multi-Tenant com Builds Específicos
+## Sistema Multi-Tenant com Subdomínios por Tenant
 
-Este projeto implementa uma arquitetura multi-tenant onde cada tenant pode ter seu próprio build específico na Vercel.
+Este projeto implementa uma arquitetura multi-tenant onde cada tenant possui seu próprio subdomínio personalizado utilizando domínios Vercel.
 
 ### Funcionamento
 
-1. O build principal serve como ponto de entrada e gerenciador de todos os tenants
-2. Quando um usuário faz login, o sistema verifica se existe um build específico para o tenant
-3. Se não houver, um novo build é automaticamente criado via API da Vercel
-4. O usuário é então redirecionado para o build específico do seu tenant
+1. O domínio principal do projeto serve como ponto de entrada e gerenciador de tenants
+2. Quando um usuário faz login, o sistema registra um subdomínio específico baseado no nome do workspace e ID do tenant
+3. O usuário é então redirecionado para seu subdomínio específico no formato `nome-workspace-id.projeto.vercel.app`
+4. Cada tenant navega em seu próprio subdomínio, mantendo a separação visual entre tenants
 
 ### Configuração
 
-Para o build principal:
+Para configurar o sistema, defina as seguintes variáveis de ambiente:
 
 ```
-NEXT_PUBLIC_IS_TENANT_BUILD=false
-VERCEL_API_TOKEN=seu-token-da-api-vercel
-VERCEL_TEAM_ID=id-do-seu-time-vercel
-VERCEL_PROJECT_ID=id-do-seu-projeto-vercel
+# Domínio base para os subdomínios (geralmente vercel.app)
+NEXT_PUBLIC_BASE_DOMAIN=vercel.app
+
+# Nome do projeto na Vercel
+NEXT_PUBLIC_VERCEL_PROJECT_NAME=seu-projeto
 ```
 
-Para builds específicos de tenant:
+### Formato dos Subdomínios
+
+Os subdomínios são gerados automaticamente seguindo o padrão:
 
 ```
-NEXT_PUBLIC_IS_TENANT_BUILD=true
-NEXT_PUBLIC_TENANT_ID=id-do-tenant-específico
-NEXT_PUBLIC_WORKSPACE_ID=id-do-workspace-principal
+{nome-workspace-normalizado}-{8-primeiros-caracteres-do-tenant-id}.{nome-do-projeto}.vercel.app
 ```
 
-### Processo de Deploy
+Por exemplo:
 
-1. O build principal deve ser configurado com as variáveis de ambiente necessárias para acessar a API da Vercel
-2. Os builds específicos por tenant são criados automaticamente e configurados com suas próprias variáveis de ambiente
-3. Cada tenant tem uma URL única no formato `tenant-{id}.vercel.app`
+```
+meu-workspace-12345678.hw-page-builded.vercel.app
+```
 
 ### Desenvolvimento Local
 
-Para desenvolvimento local, o sistema funciona sem criar builds específicos. É possível testar diferentes tenants alterando as variáveis de ambiente:
+Para desenvolvimento local, o sistema funciona sem redirecionar para subdomínios. É possível testar diferentes tenants alterando as variáveis de ambiente:
 
 ```
 NEXT_PUBLIC_TENANT_ID=tenant-id-para-teste
 NEXT_PUBLIC_WORKSPACE_ID=workspace-id-para-teste
 ```
+
+### Persistência dos Subdomínios
+
+Atualmente, os subdomínios são armazenados em memória. Em um ambiente de produção, você deve implementar:
+
+1. Armazenamento em banco de dados para os subdomínios registrados
+2. Mecanismo de sincronização para garantir consistência entre múltiplas instâncias

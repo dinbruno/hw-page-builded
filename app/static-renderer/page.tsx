@@ -1,6 +1,23 @@
 import { Suspense } from "react";
 import { PageService } from "../../services/page-constructor/page-constructor.service";
 import { PageRenderer } from "../../components/static-renderer/page-renderer";
+import { mockPages } from "../../services/mock";
+
+// Configuração para build estática
+export const dynamic = "force-static";
+
+// Gerar parâmetros estáticos para build
+export async function generateStaticParams() {
+  // Retornar uma configuração vazia para build
+  return [
+    {
+      searchParams: {
+        pageId: mockPages[0].id,
+        workspaceId: mockPages[0].workspaceId,
+      },
+    },
+  ];
+}
 
 export default async function StaticRendererPage({
   params,
@@ -41,17 +58,33 @@ async function PageContent({ pageId, workspaceId }: { pageId: string; workspaceI
   let pageData;
 
   try {
-    pageData = await PageService.getById(pageId, workspaceId);
+    // Durante a build, usar dados mockados
+    const isBuildTime = process.env.NODE_ENV === "production" && typeof window === "undefined";
+
+    if (isBuildTime) {
+      // Use mock data durante a build
+      pageData = mockPages.find((p) => p.id === pageId) || mockPages[0];
+      console.log("Using mock data for static build");
+    } else {
+      // Em runtime normal, usar o PageService
+      pageData = await PageService.getById(pageId, workspaceId);
+    }
   } catch (error) {
     console.error("Error loading page:", error);
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Error Loading Page</h1>
-          <p>Could not load the requested page. Please check the pageId and workspaceId.</p>
+    // Fallback para mock data em caso de erro
+    pageData = mockPages.find((p) => p.id === pageId) || mockPages[0];
+
+    // Se mesmo assim não tivermos dados, mostrar mensagem de erro
+    if (!pageData) {
+      return (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Error Loading Page</h1>
+            <p>Could not load the requested page. Please check the pageId and workspaceId.</p>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   return <PageRenderer pageData={pageData} />;

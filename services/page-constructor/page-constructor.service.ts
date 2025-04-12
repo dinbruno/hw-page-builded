@@ -4,11 +4,13 @@ export interface Page {
   id: string;
   slug: string;
   workspaceId: string;
+  name?: string;
 }
 
 export class PageService {
   private static cache: Record<string, { data: any; timestamp: number }> = {};
   private static CACHE_DURATION = 5 * 1000;
+  private static IS_DEVELOPMENT = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_NODE_ENV === "development";
 
   static async getById(pageId: string, workspaceId?: string): Promise<Page> {
     const cacheKey = `id:${pageId}`;
@@ -18,9 +20,7 @@ export class PageService {
     }
 
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/pages/${pageId}`;
-
-      if (process.env.NEXT_PUBLIC_NODE_ENV === "development") {
+      if (this.IS_DEVELOPMENT) {
         const page = mockPages.find((p) => p.id === pageId);
         if (!page) throw new Error(`Page with ID ${pageId} not found`);
 
@@ -32,6 +32,7 @@ export class PageService {
         return page;
       }
 
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/pages/${pageId}`;
       const response = await fetch(apiUrl);
 
       if (!response.ok) {
@@ -48,6 +49,13 @@ export class PageService {
       return data;
     } catch (error) {
       console.error("Error fetching page by ID:", error);
+
+      if (!this.IS_DEVELOPMENT) {
+        console.log("Falling back to mock data");
+        const page = mockPages.find((p) => p.id === pageId);
+        if (page) return page;
+      }
+
       throw error;
     }
   }
@@ -60,12 +68,7 @@ export class PageService {
     }
 
     try {
-      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/pages/by-slug/${slug}`);
-      if (workspaceId) {
-        url.searchParams.append("workspaceId", workspaceId);
-      }
-
-      if (process.env.NEXT_PUBLIC_NODE_ENV === "development") {
+      if (this.IS_DEVELOPMENT) {
         const page = mockPages.find((p) => p.slug === slug && (!workspaceId || p.workspaceId === workspaceId));
         if (!page) throw new Error(`Page with slug "${slug}" not found`);
 
@@ -75,6 +78,11 @@ export class PageService {
         };
 
         return page;
+      }
+
+      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/pages/by-slug/${slug}`);
+      if (workspaceId) {
+        url.searchParams.append("workspaceId", workspaceId);
       }
 
       const response = await fetch(url.toString());
@@ -93,6 +101,13 @@ export class PageService {
       return data;
     } catch (error) {
       console.error("Error fetching page by slug:", error);
+
+      if (!this.IS_DEVELOPMENT) {
+        console.log("Falling back to mock data");
+        const page = mockPages.find((p) => p.slug === slug && (!workspaceId || p.workspaceId === workspaceId));
+        if (page) return page;
+      }
+
       throw error;
     }
   }
@@ -105,12 +120,7 @@ export class PageService {
     }
 
     try {
-      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/pages`);
-      if (workspaceId) {
-        url.searchParams.append("workspaceId", workspaceId);
-      }
-
-      if (process.env.NEXT_PUBLIC_NODE_ENV === "development") {
+      if (this.IS_DEVELOPMENT) {
         const pages = workspaceId ? mockPages.filter((p) => p.workspaceId === workspaceId) : mockPages;
 
         this.cache[cacheKey] = {
@@ -119,6 +129,11 @@ export class PageService {
         };
 
         return pages;
+      }
+
+      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/pages`);
+      if (workspaceId) {
+        url.searchParams.append("workspaceId", workspaceId);
       }
 
       const response = await fetch(url.toString());
@@ -137,6 +152,13 @@ export class PageService {
       return data;
     } catch (error) {
       console.error("Error fetching all pages:", error);
+
+      if (!this.IS_DEVELOPMENT) {
+        console.log("Falling back to mock data");
+        const pages = workspaceId ? mockPages.filter((p) => p.workspaceId === workspaceId) : mockPages;
+        return pages;
+      }
+
       throw error;
     }
   }

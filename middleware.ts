@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, hostname } = request.nextUrl;
+  const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
+  const isVercelPreview = hostname.includes("vercel.app");
 
   // Verificar se é uma rota pública
   if (
@@ -29,12 +31,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Se está na rota raiz (/), redirecionar para o handler específico que trata essa rota
-  if (pathname === "/") {
+  // Verificar se estamos em produção e se é o domínio principal
+  const isMainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN && hostname === process.env.NEXT_PUBLIC_MAIN_DOMAIN;
+
+  // Se for o domínio principal e não for em localhost, verificar se precisa redirecionar para o subdomínio do tenant
+  if ((isMainDomain || !isLocalhost) && pathname === "/") {
+    // Este bloco será executado apenas se estamos na raiz do domínio principal
     return NextResponse.rewrite(new URL("/_root-handler", request.url));
   }
 
-  // Continuar com a requisição para todas as outras rotas autenticadas
+  // Em desenvolvimento local ou em um subdomínio, continuar a requisição
   return NextResponse.next();
 }
 

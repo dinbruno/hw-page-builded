@@ -2,11 +2,23 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { PageService } from "@/services/page-constructor/page-constructor.service";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
-import { TenantBuildsService } from "@/services/tenant-builds/tenant-builds.service";
+import { mockPages, mockWorkspaces } from "@/services/mock";
+
+// Para builds estáticos
+export const dynamic = "force-static";
 
 // This is an internal route handler for the root route (/)
 // It's accessed via middleware rewrite, not directly by users
 export default async function RootHandler() {
+  // Verificar se estamos durante a build estática
+  const isBuildTime = process.env.NODE_ENV === "production" && typeof window === "undefined";
+
+  if (isBuildTime) {
+    console.log("Build estático, usando mock data");
+    // Durante a build, simplesmente redirecionar para a página inicial mock
+    return redirect(`/pagina-inicial?workspaceId=${mockWorkspaces[0].id}`);
+  }
+
   // Verificar cookies para garantir autenticação
   const cookieStore = cookies();
   const authToken = cookieStore.get("authToken")?.value;
@@ -24,53 +36,13 @@ export default async function RootHandler() {
     console.log("Workspaces obtidos:", workspaces?.length || 0);
 
     if (workspaces && workspaces.length > 0) {
-      // Verificar se já existe um build específico para este tenant
-      console.log("Verificando se existe build para o tenant:", tenantId);
+      const workspace = workspaces[0];
 
-      // Verificar ambiente atual
-      const isProduction = process.env.NODE_ENV === "production";
+      // Em ambiente de desenvolvimento, continuar com o fluxo normal
+      console.log("Ambiente de desenvolvimento, continuando fluxo normal");
+      console.log("Obtendo páginas para workspace:", workspace.id);
 
-      // Se for produção, verificar se existe build específico para o tenant
-      if (isProduction) {
-        // Verificar se este é o build principal ou um build específico do tenant
-        const isTenantBuild = process.env.NEXT_PUBLIC_IS_TENANT_BUILD === "true";
-
-        if (!isTenantBuild) {
-          // Este é o build principal, precisamos verificar/criar um build específico
-          const tenantBuildUrl = await TenantBuildsService.getOrCreateTenantBuildUrl(tenantId, workspaces[0].id);
-
-          if (tenantBuildUrl) {
-            console.log("Redirecionando para build específico do tenant:", tenantBuildUrl);
-
-            // Construir a URL completa com a rota da página inicial
-            try {
-              // Get all pages for the workspace
-              const pages = await PageService.getAll(workspaces[0].id);
-              const homePage = pages.find((page: any) => page.name === "Página Inicial");
-
-              if (homePage) {
-                // Redirect to tenant build with the home page path
-                const fullUrl = `${tenantBuildUrl}/${homePage.slug}?workspaceId=${workspaces[0].id}`;
-                console.log("Redirecionando para URL completa:", fullUrl);
-                return redirect(fullUrl);
-              } else {
-                // No home page found, redirect to tenant build root
-                return redirect(tenantBuildUrl);
-              }
-            } catch (pageError) {
-              console.error("Erro ao buscar página inicial:", pageError);
-              // Falha ao buscar página, redirecionar para a raiz do build
-              return redirect(tenantBuildUrl);
-            }
-          }
-        }
-      }
-
-      // Este é um build específico do tenant ou estamos em desenvolvimento
-      // Continuar com o fluxo normal para redirecionar para a página inicial
-      console.log("Obtendo páginas para workspace:", workspaces[0].id);
-      // Try to find the "Página Inicial" page
-      const pages = await PageService.getAll(workspaces[0].id);
+      const pages = await PageService.getAll(workspace.id);
       console.log("Páginas obtidas:", pages?.length || 0);
 
       const homePage = pages.find((page: any) => page.name === "Página Inicial");
@@ -78,12 +50,12 @@ export default async function RootHandler() {
 
       if (homePage) {
         // Redirect to the home page with workspaceId
-        const redirectUrl = `/${homePage.slug}?workspaceId=${workspaces[0].id}`;
+        const redirectUrl = `/${homePage.slug}?workspaceId=${workspace.id}`;
         console.log("Redirecionando para:", redirectUrl);
         return redirect(redirectUrl);
       } else {
         // Fallback to workspace if homepage not found
-        const redirectUrl = `/workspace/${workspaces[0].slug}`;
+        const redirectUrl = `/workspace/${workspace.slug}`;
         console.log("Redirecionando para workspace:", redirectUrl);
         return redirect(redirectUrl);
       }
