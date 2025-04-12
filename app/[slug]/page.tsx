@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { PageRenderer } from "../../components/static-renderer/page-renderer";
+import { Page, PageRenderer } from "../../components/static-renderer/page-renderer";
 import { PageService } from "../../services/page-constructor/page-constructor.service";
 
 export default async function SlugPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
+
+  console.log("slug", slug);
 
   // Se não houver slug, assumimos que é a página inicial
   const currentSlug = slug || "pagina-inicial";
@@ -28,7 +30,7 @@ function PageLoading() {
 }
 
 async function PageContent({ slug, workspaceId, tenantId }: { slug: string; workspaceId: string; tenantId: string }) {
-  let pageData;
+  let pageData: Page | any = null;
 
   try {
     pageData = await PageService.getBySlug(slug, workspaceId);
@@ -45,15 +47,6 @@ async function PageContent({ slug, workspaceId, tenantId }: { slug: string; work
 }
 
 export async function generateStaticParams() {
-  const workspaceId = process.env.NEXT_PUBLIC_WORKSPACE_ID || "4a1b7d73-7e51-47f5-9572-78d973f95c08";
-
-  try {
-    const pages = await PageService.getAll(workspaceId);
-    return pages.map((page) => ({
-      slug: page.slug,
-    }));
-  } catch (error) {
-    console.error("Error generating static params:", error);
-    return [];
-  }
+  // Sempre retorne as rotas estáticas conhecidas para evitar chamadas de API durante a build
+  return [{ slug: "pagina-inicial" }, { slug: "teste" }];
 }

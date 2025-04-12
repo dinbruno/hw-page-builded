@@ -1,7 +1,7 @@
 import type { CreateWorkspaceInput, UpdateWorkspaceInput, GetWorkspaceParams, GetWorkspacesResponse, Workspace } from "./workspaces.types";
 import { getHeaders } from "../../utils/getHeaders";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL_PROD;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export class WorkspaceService {
   private static async handleResponse<T>(response: Response): Promise<T> {

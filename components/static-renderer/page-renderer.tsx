@@ -13,7 +13,7 @@ export interface Page {
   slug: string;
 }
 
-export function PageRenderer({ pageData }: { pageData: Page }) {
+export function PageRenderer({ pageData }: { pageData: Page | any }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

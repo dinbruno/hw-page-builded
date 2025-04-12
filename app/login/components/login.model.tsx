@@ -17,6 +17,15 @@ import { loginSchema, resetSchema } from "./login.schema";
 import { handleFirebaseError } from "@/lib/functions";
 import { authApi } from "@/services/api";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
+import { PageService } from "@/services/page-constructor/page-constructor.service";
+
+// Define extended page interface that includes name
+interface PageWithName {
+  id: string;
+  slug: string;
+  workspaceId: string;
+  name: string;
+}
 
 export function useLoginPage() {
   const router = useRouter();
@@ -68,16 +77,23 @@ export function useLoginPage() {
       // Verificar se o usuário tem acesso a algum tenant
       const response = await authApi.post("/auth/login", { idToken });
 
-      if (!response.data.data.tenantAccess) {
+      // Verificar se o login foi bem-sucedido com base no status code e success
+      if (response.data.statusCode !== 201 || !response.data.success) {
         setShowAccessRequest(true);
         setIsLoading(false);
         return;
       }
 
       const token = response.data.data.token;
+      const tenantId = response.data.data.user.tenantId;
 
+      // Armazenar token e tenantId nos cookies
       Cookies.set("authToken", token, { expires: 7, secure: true, sameSite: "Strict" });
+      Cookies.set("tenantId", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
+
+      // Armazenar também no localStorage como backup
       localStorage.setItem("authToken", token);
+      localStorage.setItem("tenantId", tenantId);
 
       // Show success toast
       toast({
@@ -85,24 +101,12 @@ export function useLoginPage() {
         description: "Bem-vindo de volta!",
       });
 
-      // Get workspaces and prepare for redirect
-      const workspaces = await WorkspaceService.getWorkspaces();
-
       setIsRedirecting(true);
 
-      if (workspaces && workspaces.length > 0) {
-        setRedirectDestination("workspace");
-        // Delay redirect to show animation
-        setTimeout(() => {
-          router.push(`/workspace/${workspaces[0].slug}`);
-        }, 1500);
-      } else {
-        setRedirectDestination("onboarding");
-        // Delay redirect to show animation
-        setTimeout(() => {
-          router.push("/onboarding/welcome");
-        }, 1500);
-      }
+      // Simply redirect to root route which will handle the proper redirection
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
     } catch (err: any) {
       console.error(err);
       setError(handleFirebaseError(err.code || err.message || "Erro ao fazer login"));
@@ -159,16 +163,23 @@ export function useLoginPage() {
       // Verificar se o usuário tem acesso a algum tenant
       const response = await authApi.post("/auth/login", { idToken });
 
-      if (!response.data.data.tenantAccess) {
+      // Verificar se o login foi bem-sucedido com base no status code e success
+      if (response.data.statusCode !== 201 || !response.data.success) {
         setShowAccessRequest(true);
         setIsLoading(false);
         return;
       }
 
       const token = response.data.data.token;
+      const tenantId = response.data.data.user.tenantId;
 
+      // Armazenar token e tenantId nos cookies
       Cookies.set("authToken", token, { expires: 7, secure: true, sameSite: "Strict" });
+      Cookies.set("tenantId", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
+
+      // Armazenar também no localStorage como backup
       localStorage.setItem("authToken", token);
+      localStorage.setItem("tenantId", tenantId);
 
       // Show success toast
       toast({
@@ -176,24 +187,12 @@ export function useLoginPage() {
         description: "Bem-vindo de volta!",
       });
 
-      // Get workspaces and prepare for redirect
-      const workspaces = await WorkspaceService.getWorkspaces();
-
       setIsRedirecting(true);
 
-      if (workspaces && workspaces.length > 0) {
-        setRedirectDestination("workspace");
-        // Delay redirect to show animation
-        setTimeout(() => {
-          router.push(`/workspace/${workspaces[0].slug}`);
-        }, 1500);
-      } else {
-        setRedirectDestination("onboarding");
-        // Delay redirect to show animation
-        setTimeout(() => {
-          router.push("/onboarding/welcome");
-        }, 1500);
-      }
+      // Simply redirect to root route which will handle the proper redirection
+      setTimeout(() => {
+        router.push("/");
+      }, 1500);
     } catch (err: any) {
       console.error(err);
       setError(handleFirebaseError(err.code || err.message || "Erro ao fazer login"));
