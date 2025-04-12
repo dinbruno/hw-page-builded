@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { PageService } from "@/services/page-constructor/page-constructor.service";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
+import { TenantDomainsService } from "@/services/tenant-domains/tenant-domains.service";
 import { mockPages, mockWorkspaces } from "@/services/mock";
 
 // Para builds estáticos
@@ -37,6 +38,35 @@ export default async function RootHandler() {
 
     if (workspaces && workspaces.length > 0) {
       const workspace = workspaces[0];
+
+      // Verificar se estamos em ambiente de produção
+      const isProduction = process.env.NODE_ENV === "production";
+      const isServerSide = typeof window === "undefined";
+
+      // Se estamos em produção e no servidor, verificar ou criar domínio para o tenant
+      if (isProduction && isServerSide) {
+        console.log("Ambiente de produção, verificando/criando domínio para tenant...");
+
+        // Verificar se já existe um domínio para este tenant ou criar um novo
+        const domainResult = await TenantDomainsService.getOrRegisterTenantDomain(workspace.name || workspace.slug, tenantId);
+
+        console.log("Domínio obtido:", domainResult);
+
+        // Obter páginas do workspace para encontrar a página inicial
+        const pages = await PageService.getAll(workspace.id);
+        const homePage = pages.find((page: any) => page.name === "Página Inicial");
+
+        if (homePage) {
+          // Redirecionar para a página inicial no domínio do tenant
+          const fullUrl = `${domainResult}/${homePage.slug}?workspaceId=${workspace.id}`;
+          console.log("Redirecionando para página inicial no domínio do tenant:", fullUrl);
+          return redirect(fullUrl);
+        } else {
+          // Sem página inicial, redirecionar para o domínio do tenant
+          console.log("Redirecionando para o domínio do tenant:", domainResult);
+          return redirect(domainResult);
+        }
+      }
 
       // Em ambiente de desenvolvimento, continuar com o fluxo normal
       console.log("Ambiente de desenvolvimento, continuando fluxo normal");

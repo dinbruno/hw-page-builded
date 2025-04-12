@@ -18,6 +18,7 @@ import { handleFirebaseError } from "@/lib/functions";
 import { authApi } from "@/services/api";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
 import { PageService } from "@/services/page-constructor/page-constructor.service";
+import { TenantDomainsService } from "@/services/tenant-domains/tenant-domains.service";
 
 // Define extended page interface that includes name
 interface PageWithName {
@@ -35,6 +36,7 @@ export function useLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [domainStatus, setDomainStatus] = useState<"checking" | "ready" | "failed">("ready");
   const [redirectDestination, setRedirectDestination] = useState<"workspace" | "onboarding">("workspace");
   const [showAccessRequest, setShowAccessRequest] = useState(false);
 
@@ -58,6 +60,128 @@ export function useLoginPage() {
   useEffect(() => {
     setError("");
   }, []);
+
+  // Função para verificar e aguardar disponibilidade do domínio
+  const verifyDomainAvailability = async (tenantId: string) => {
+    try {
+      setDomainStatus("checking");
+
+      // Obter workspaces para usar o nome no domínio
+      const workspaces = await WorkspaceService.getWorkspaces();
+
+      if (!workspaces || workspaces.length === 0) {
+        // Se não houver workspaces, vai redirecionar para onboarding
+        return true;
+      }
+
+      const workspace = workspaces[0];
+
+      // Verificar disponibilidade do domínio
+      let attempts = 0;
+      const maxAttempts = 3;
+      let domainReady = false;
+      let lastDomainResult: { success: boolean; url: string; message?: string } | null = null;
+
+      while (attempts < maxAttempts && !domainReady) {
+        attempts++;
+        console.log(`Tentativa ${attempts} de verificar domínio...`);
+
+        try {
+          // Usar a rota de API que verifica o domínio do lado do servidor
+          const response = await fetch("/api/domain/check", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              workspaceName: workspace.name || workspace.slug,
+              tenantId: tenantId,
+            }),
+            cache: "no-store",
+          });
+
+          if (!response.ok) {
+            console.warn(`Erro na verificação do domínio. Status: ${response.status}`);
+            // Aguardar 2 segundos antes da próxima tentativa
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            continue;
+          }
+
+          const domainResult = await response.json();
+          lastDomainResult = domainResult;
+          console.log("Resultado da verificação via API:", domainResult);
+
+          if (domainResult.success) {
+            console.log("Domínio verificado com sucesso:", domainResult.url);
+            domainReady = true;
+            break;
+          } else {
+            // Se a API retornou falha, tentar usar o domínio padrão
+            console.warn("Problema ao criar domínio específico:", domainResult.message);
+
+            // Verificar se o domínio padrão está disponível
+            const projectName = process.env.NEXT_PUBLIC_VERCEL_PROJECT_NAME || "hw-page-builded";
+            const domainUrl = `https://${projectName}.vercel.app`;
+
+            toast({
+              title: "Informação",
+              description: `Não foi possível criar um domínio específico. Usando o domínio padrão (${projectName}.vercel.app).`,
+              duration: 5000,
+            });
+
+            // Consideramos como sucesso para permitir o login, mesmo sem domínio específico
+            domainReady = true;
+            break;
+          }
+        } catch (err) {
+          console.error("Erro ao tentar verificar domínio:", err);
+          // Aguardar antes da próxima tentativa
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      }
+
+      // Mesmo se não conseguirmos verificar o domínio, podemos continuar após exibir alerta
+      if (domainReady) {
+        setDomainStatus("ready");
+        return true;
+      } else {
+        console.log("Falha na verificação do domínio, mas continuando com redirecionamento");
+        setDomainStatus("failed");
+
+        let errorMessage = "A aplicação pode estar em processo de inicialização. Vamos continuar, mas pode haver alguns atrasos.";
+        if (lastDomainResult && typeof lastDomainResult === "object") {
+          const message = (lastDomainResult as any).message;
+          if (message) {
+            errorMessage = `Problema ao verificar domínio: ${message}. Vamos continuar mesmo assim.`;
+          }
+        }
+
+        toast({
+          title: "Atenção",
+          description: errorMessage,
+          variant: "destructive",
+          duration: 5000,
+        });
+
+        // Continuar mesmo assim após um tempo
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        return true;
+      }
+    } catch (error) {
+      console.error("Erro ao verificar domínio:", error);
+      setDomainStatus("failed");
+
+      toast({
+        title: "Atenção",
+        description: "Problemas ao verificar configuração do ambiente. Redirecionando para a página principal.",
+        variant: "destructive",
+        duration: 5000,
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return true; // Retornar true mesmo com erro para não bloquear redirecionamento
+    }
+  };
 
   const handleLogin = async (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
@@ -98,18 +222,30 @@ export function useLoginPage() {
       // Show success toast
       toast({
         title: "Login realizado com sucesso",
-        description: "Bem-vindo de volta!",
+        description: "Verificando ambiente...",
       });
 
       setIsRedirecting(true);
 
-      // Simply redirect to root route which will handle the proper redirection
-      setTimeout(() => {
+      // Verificar disponibilidade do domínio antes de redirecionar
+      const domainReady = await verifyDomainAvailability(tenantId);
+
+      if (domainReady) {
+        // Simply redirect to root route which will handle the proper redirection
         router.push("/");
-      }, 1500);
+      } else {
+        toast({
+          title: "Problema de conectividade",
+          description: "Não foi possível verificar o ambiente. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        setIsRedirecting(false);
+        setIsLoading(false);
+      }
     } catch (err: any) {
       console.error(err);
       setError(handleFirebaseError(err.code || err.message || "Erro ao fazer login"));
+      setIsRedirecting(false);
 
       // Show error toast
       toast({
@@ -184,15 +320,26 @@ export function useLoginPage() {
       // Show success toast
       toast({
         title: "Login realizado com sucesso",
-        description: "Bem-vindo de volta!",
+        description: "Verificando ambiente...",
       });
 
       setIsRedirecting(true);
 
-      // Simply redirect to root route which will handle the proper redirection
-      setTimeout(() => {
+      // Verificar disponibilidade do domínio antes de redirecionar
+      const domainReady = await verifyDomainAvailability(tenantId);
+
+      if (domainReady) {
+        // Simply redirect to root route which will handle the proper redirection
         router.push("/");
-      }, 1500);
+      } else {
+        toast({
+          title: "Problema de conectividade",
+          description: "Não foi possível verificar o ambiente. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+        setIsRedirecting(false);
+        setIsLoading(false);
+      }
     } catch (err: any) {
       console.error(err);
       setError(handleFirebaseError(err.code || err.message || "Erro ao fazer login"));
@@ -226,5 +373,6 @@ export function useLoginPage() {
     showAccessRequest,
     setShowAccessRequest,
     handleGoogleLogin,
+    domainStatus,
   };
 }

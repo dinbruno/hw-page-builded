@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, AlertCircle, Info } from "lucide-react";
+import { Loader2, AlertCircle, Info, Server } from "lucide-react";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export function LoginView(props: any) {
     showAccessRequest,
     setShowAccessRequest,
     handleGoogleLogin,
+    domainStatus,
   } = props;
 
   const [rememberMe, setRememberMe] = useState(false);
@@ -61,7 +62,7 @@ export function LoginView(props: any) {
                     ease: "linear",
                   }}
                 >
-                  <Loader2 className="h-12 w-12 text-primary" />
+                  {domainStatus === "checking" ? <Server className="h-12 w-12 text-amber-500" /> : <Loader2 className="h-12 w-12 text-primary" />}
                 </motion.div>
                 <motion.h2
                   className="text-xl font-semibold mt-4"
@@ -69,7 +70,7 @@ export function LoginView(props: any) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  Redirecionando
+                  {domainStatus === "checking" ? "Verificando ambiente" : "Redirecionando"}
                 </motion.h2>
                 <motion.p
                   className="text-muted-foreground text-center mt-2"
@@ -77,10 +78,30 @@ export function LoginView(props: any) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  {redirectDestination === "workspace"
+                  {domainStatus === "checking"
+                    ? "Estamos verificando a disponibilidade do ambiente. Isso pode levar alguns segundos..."
+                    : redirectDestination === "workspace"
                     ? "Você está sendo redirecionado para seu workspace"
                     : "Você está sendo redirecionado para o onboarding"}
                 </motion.p>
+                {domainStatus === "checking" && (
+                  <motion.div
+                    className="w-full max-w-xs h-2 bg-secondary mt-6 rounded-full overflow-hidden"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.6 }}
+                  >
+                    <motion.div
+                      className="h-full bg-amber-500"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{
+                        duration: 6,
+                        ease: "linear",
+                      }}
+                    />
+                  </motion.div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
