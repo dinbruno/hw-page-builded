@@ -18,7 +18,7 @@ import { handleFirebaseError } from "@/lib/functions";
 import { authApi } from "@/services/api";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
 import { PageService } from "@/services/page-constructor/page-constructor.service";
-import { TenantDomainsService } from "@/services/tenant-domains/tenant-domains.service";
+import { TenantDomainsClient } from "@/services/tenant-domains/tenant-domains-client";
 
 // Define extended page interface that includes name
 interface PageWithName {
@@ -87,85 +87,21 @@ export function useLoginPage() {
         console.log(`Tentativa ${attempts} de verificar domínio...`);
 
         try {
-          // Usar a rota de API que verifica o domínio do lado do servidor
-          const apiUrl = "/api/domain/check"; // Garantir que não há barra final
-          console.log(`Verificando domínio via API: ${apiUrl}`);
+          // Usar o novo cliente para obter ou registrar o domínio
+          const domainUrl = await TenantDomainsClient.getOrRegisterTenantDomain(
+            workspace.name || workspace.slug,
+            tenantId,
+            true // Forçar criação do domínio
+          );
 
-          const response = await fetch(apiUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              workspaceName: workspace.name || workspace.slug,
-              tenantId: tenantId,
-            }),
-            cache: "no-store",
-          });
+          console.log("Domínio verificado com sucesso via API de domínios:", domainUrl);
 
-          if (!response.ok) {
-            console.warn(`Erro na verificação do domínio. Status: ${response.status} (${response.statusText})`);
-
-            // Tente novamente sem a barra final, caso esse seja o problema
-            if (response.status === 405 && apiUrl.endsWith("/")) {
-              const alternativeUrl = apiUrl.slice(0, -1);
-              console.log(`Tentando URL alternativa: ${alternativeUrl}`);
-
-              const alternativeResponse = await fetch(alternativeUrl, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  workspaceName: workspace.name || workspace.slug,
-                  tenantId: tenantId,
-                }),
-                cache: "no-store",
-              });
-
-              if (alternativeResponse.ok) {
-                const domainResult = await alternativeResponse.json();
-                lastDomainResult = domainResult;
-
-                if (domainResult.success) {
-                  console.log("Domínio verificado com sucesso (URL alternativa):", domainResult.url);
-                  domainReady = true;
-                  break;
-                }
-              }
-            }
-
-            // Aguardar 2 segundos antes da próxima tentativa
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-            continue;
-          }
-
-          const domainResult = await response.json();
-          lastDomainResult = domainResult;
-          console.log("Resultado da verificação via API:", domainResult);
-
-          if (domainResult.success) {
-            console.log("Domínio verificado com sucesso:", domainResult.url);
-            domainReady = true;
-            break;
-          } else {
-            // Se a API retornou falha, tentar usar o domínio padrão
-            console.warn("Problema ao criar domínio específico:", domainResult.message);
-
-            // Verificar se o domínio padrão está disponível
-            const projectName = process.env.NEXT_PUBLIC_VERCEL_PROJECT_NAME || "hw-page-builded";
-            const domainUrl = `https://${projectName}.vercel.app`;
-
-            toast({
-              title: "Informação",
-              description: `Não foi possível criar um domínio específico. Usando o domínio padrão (${projectName}.vercel.app).`,
-              duration: 5000,
-            });
-
-            // Consideramos como sucesso para permitir o login, mesmo sem domínio específico
-            domainReady = true;
-            break;
-          }
+          domainReady = true;
+          lastDomainResult = {
+            success: true,
+            url: domainUrl,
+          };
+          break;
         } catch (err) {
           console.error("Erro ao tentar verificar domínio:", err);
           // Aguardar antes da próxima tentativa
