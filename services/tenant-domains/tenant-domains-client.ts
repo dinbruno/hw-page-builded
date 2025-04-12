@@ -23,6 +23,85 @@ export class TenantDomainsClient {
   private static API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
   /**
+   * Obtém o token de autenticação do armazenamento local
+   * @returns Token de autenticação ou undefined se não encontrado
+   */
+  private static getAuthToken(): string | undefined {
+    try {
+      // Tentar obter do cookie primeiro
+      if (typeof document !== "undefined") {
+        const authCookie = document.cookie.split("; ").find((row) => row.startsWith("authToken="));
+        if (authCookie) return authCookie.split("=")[1];
+      }
+
+      // Se não encontrar no cookie, tentar no localStorage
+      if (typeof localStorage !== "undefined") {
+        return localStorage.getItem("authToken") || undefined;
+      }
+
+      return undefined;
+    } catch (error) {
+      console.error("Error getting auth token:", error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Obtém o ID do tenant do armazenamento local
+   * @returns ID do tenant ou undefined se não encontrado
+   */
+  private static getTenantId(): string | undefined {
+    try {
+      // Tentar obter do cookie primeiro
+      if (typeof document !== "undefined") {
+        const tenantCookie = document.cookie.split("; ").find((row) => row.startsWith("tenantId="));
+        if (tenantCookie) return tenantCookie.split("=")[1];
+      }
+
+      // Se não encontrar no cookie, tentar no localStorage
+      if (typeof localStorage !== "undefined") {
+        return localStorage.getItem("tenantId") || undefined;
+      }
+
+      return undefined;
+    } catch (error) {
+      console.error("Error getting tenant ID:", error);
+      return undefined;
+    }
+  }
+
+  /**
+   * Adiciona cabeçalhos de autenticação e tenant ID a uma requisição
+   * @param headers Cabeçalhos iniciais
+   * @param forceIncludeTenantId Forçar inclusão do tenant ID mesmo quando não for fornecido
+   * @param tenantIdOverride ID do tenant para sobrescrever o armazenado (opcional)
+   * @returns Cabeçalhos com autenticação e tenant ID
+   */
+  private static addAuthHeaders(
+    headers: Record<string, string> = {},
+    forceIncludeTenantId = true,
+    tenantIdOverride?: string
+  ): Record<string, string> {
+    const newHeaders = { ...headers };
+
+    // Adicionar token de autenticação se disponível
+    const token = this.getAuthToken();
+    if (token) {
+      newHeaders["Authorization"] = `Bearer ${token}`;
+    }
+
+    // Adicionar tenant ID
+    const tenantId = tenantIdOverride || this.getTenantId();
+    if (tenantId) {
+      newHeaders["x-tenant-id"] = tenantId;
+    } else if (forceIncludeTenantId) {
+      console.warn("TenantDomainsClient: Tenant ID não encontrado. Algumas operações podem falhar.");
+    }
+
+    return newHeaders;
+  }
+
+  /**
    * Gera a URL do subdomínio para um tenant específico sem registrá-la
    * @param workspaceName Nome do workspace (será usado como parte do subdomínio)
    * @param tenantId ID do tenant
@@ -37,9 +116,13 @@ export class TenantDomainsClient {
 
       const response = await fetch(`${this.API_URL}/tenant-domains/generate-url`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: this.addAuthHeaders(
+          {
+            "Content-Type": "application/json",
+          },
+          true,
+          tenantId
+        ),
         body: JSON.stringify({ workspaceName, tenantId }),
       });
 
@@ -72,15 +155,19 @@ export class TenantDomainsClient {
 
       const response = await fetch(`${this.API_URL}/tenant-domains/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: this.addAuthHeaders(
+          {
+            "Content-Type": "application/json",
+          },
+          true,
+          tenantId
+        ),
         body: JSON.stringify({ workspaceName, tenantId, forceDomainCreation }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro $ {response.status}: ${response.statusText}`);
+        throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
       }
 
       return await response.json();
@@ -110,9 +197,13 @@ export class TenantDomainsClient {
 
       const response = await fetch(`${this.API_URL}/tenant-domains/get-or-register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: this.addAuthHeaders(
+          {
+            "Content-Type": "application/json",
+          },
+          true,
+          tenantId
+        ),
         body: JSON.stringify({
           workspaceName,
           tenantId,
@@ -143,9 +234,9 @@ export class TenantDomainsClient {
 
       const response = await fetch(`${this.API_URL}/tenant-domains/check`, {
         method: "POST",
-        headers: {
+        headers: this.addAuthHeaders({
           "Content-Type": "application/json",
-        },
+        }),
         body: JSON.stringify({ domainName }),
       });
 
@@ -174,9 +265,13 @@ export class TenantDomainsClient {
 
       const response = await fetch(`${this.API_URL}/tenant-domains/check-correct-domain`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: this.addAuthHeaders(
+          {
+            "Content-Type": "application/json",
+          },
+          true,
+          tenantId
+        ),
         body: JSON.stringify({ currentUrl, workspaceName, tenantId }),
       });
 
@@ -202,9 +297,9 @@ export class TenantDomainsClient {
 
       const response = await fetch(`${this.API_URL}/tenant-domains/list`, {
         method: "GET",
-        headers: {
+        headers: this.addAuthHeaders({
           "Content-Type": "application/json",
-        },
+        }),
       });
 
       if (!response.ok) {

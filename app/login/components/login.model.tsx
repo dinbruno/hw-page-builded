@@ -19,6 +19,7 @@ import { authApi } from "@/services/api";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
 import { PageService } from "@/services/page-constructor/page-constructor.service";
 import { TenantDomainsClient } from "@/services/tenant-domains/tenant-domains-client";
+import { setAuthToken, setTenantId } from "@/utils/getAuth";
 
 // Define extended page interface that includes name
 interface PageWithName {
@@ -180,13 +181,13 @@ export function useLoginPage() {
       const token = response.data.data.token;
       const tenantId = response.data.data.user.tenantId;
 
-      // Armazenar token e tenantId nos cookies
+      // Armazenar token e tenantId usando as novas funções de autenticação
+      setAuthToken(token);
+      setTenantId(tenantId);
+
+      // Também manter compatibilidade com código existente
       Cookies.set("authToken", token, { expires: 7, secure: true, sameSite: "Strict" });
       Cookies.set("tenantId", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
-
-      // Armazenar também no localStorage como backup
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("tenantId", tenantId);
 
       // Show success toast
       toast({
@@ -278,13 +279,13 @@ export function useLoginPage() {
       const token = response.data.data.token;
       const tenantId = response.data.data.user.tenantId;
 
-      // Armazenar token e tenantId nos cookies
+      // Armazenar token e tenantId usando as novas funções de autenticação
+      setAuthToken(token);
+      setTenantId(tenantId);
+
+      // Também manter compatibilidade com código existente
       Cookies.set("authToken", token, { expires: 7, secure: true, sameSite: "Strict" });
       Cookies.set("tenantId", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
-
-      // Armazenar também no localStorage como backup
-      localStorage.setItem("authToken", token);
-      localStorage.setItem("tenantId", tenantId);
 
       // Show success toast
       toast({
