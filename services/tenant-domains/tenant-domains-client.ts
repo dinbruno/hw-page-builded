@@ -20,7 +20,7 @@ export interface TenantDomainListResponse {
  */
 export class TenantDomainsClient {
   // URL base da API
-  private static API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  private static API_URL = process.env.NEXT_PUBLIC_API_CORE_URL_PROD || "http://localhost:4000";
 
   /**
    * Obtém o token de autenticação do armazenamento local
