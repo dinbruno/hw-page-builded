@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { PageService } from "@/services/page-constructor/page-constructor.service";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
-import { TenantDomainsService } from "@/services/tenant-domains/tenant-domains.service";
+import { TenantDomainsClient } from "@/services/tenant-domains/tenant-domains-client";
 import { mockPages, mockWorkspaces } from "@/services/mock";
 
 // Para builds estáticos
@@ -48,7 +48,7 @@ export default async function RootHandler() {
         console.log("Ambiente de produção, verificando/criando domínio para tenant...");
 
         // Verificar se já existe um domínio para este tenant ou criar um novo
-        const domainResult = await TenantDomainsService.getOrRegisterTenantDomain(workspace.name || workspace.slug, tenantId);
+        const domainResult = await TenantDomainsClient.getOrRegisterTenantDomain(workspace.name || workspace.slug, tenantId);
 
         console.log("Domínio obtido:", domainResult);
 

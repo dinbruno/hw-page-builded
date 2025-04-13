@@ -34,8 +34,8 @@ export async function middleware(request: NextRequest) {
   // Verificar se estamos em produção e se é o domínio principal
   const isMainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN && hostname === process.env.NEXT_PUBLIC_MAIN_DOMAIN;
 
-  // Se for o domínio principal e não for em localhost, verificar se precisa redirecionar para o subdomínio do tenant
-  if ((isMainDomain || !isLocalhost) && pathname === "/") {
+  // Se for o domínio principal e não for em localhost, redirecionar para o subdomínio do tenant
+  if (isMainDomain && !isLocalhost && pathname === "/") {
     // Este bloco será executado apenas se estamos na raiz do domínio principal
     return NextResponse.rewrite(new URL("/_root-handler", request.url));
   }
