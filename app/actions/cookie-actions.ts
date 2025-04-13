@@ -15,7 +15,6 @@ export async function setWorkspaceIdCookie(workspaceId: string) {
     secure: process.env.NODE_ENV === "production",
   });
 
-  // Revalidar a rota raiz para atualizar a página
   revalidatePath("/");
 
   return { success: true };

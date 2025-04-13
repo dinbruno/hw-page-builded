@@ -11,18 +11,15 @@ export default async function SlugPage({ params }: { params: { slug: string } })
   const tenantId = cookieStore.get("x-tenant")?.value;
   const workspaceId = cookieStore.get("workspaceId")?.value;
 
-  // Se não há token ou tenantId, retorna página não encontrada (será redirecionado pelo middleware)
   if (!authToken || !tenantId) {
     return notFound();
   }
 
   try {
-    // Se não temos workspaceId, devemos mostrar página de carregamento
     if (!workspaceId) {
       return <PageLoading />;
     }
 
-    // Obter dados da página usando server-side tokens
     const pageData = await PageService.getBySlug(slug, workspaceId, authToken, tenantId);
 
     if (!pageData) {
