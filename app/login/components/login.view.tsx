@@ -67,7 +67,10 @@ export function LoginView(props: any) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background" style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_background } : {}}>
+    <div
+      className="flex bg-background max-w-screen-xl mx-auto max-h-screen overflow-hidden"
+      style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_background } : {}}
+    >
       <AnimatePresence>
         {isRedirecting && (
           <motion.div
@@ -141,7 +144,7 @@ export function LoginView(props: any) {
       </AnimatePresence>
 
       <div className="flex flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 w-full lg:w-1/2">
-        <div className="mx-auto w-full max-w-sm lg:max-w-md">
+        <div className="mx-auto w-full">
           <motion.div className="mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
             {workspaceInfo.workspace?.favicon_file?.url ? (
               <Image
@@ -350,15 +353,17 @@ export function LoginView(props: any) {
                   )}
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="remember" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
-                  <Label
-                    htmlFor="remember"
-                    className="text-sm font-normal"
-                    style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name, color: workspaceInfo.theme.color_text } : {}}
-                  >
-                    Lembrar de mim
-                  </Label>
+                <div className="flex justify-end">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="remember" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
+                    <Label
+                      htmlFor="remember"
+                      className="text-sm font-normal"
+                      style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name, color: workspaceInfo.theme.color_text } : {}}
+                    >
+                      Lembrar de mim
+                    </Label>
+                  </div>
                 </div>
 
                 <div className="pt-2">
@@ -384,26 +389,6 @@ export function LoginView(props: any) {
                       <span style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Entrar</span>
                     )}
                   </Button>
-                </div>
-
-                <div className="text-center text-sm">
-                  <span className="text-muted-foreground" style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>
-                    Não tem uma conta?{" "}
-                    <Link
-                      href="/sign-up"
-                      className="text-primary hover:underline"
-                      style={
-                        workspaceInfo.theme
-                          ? {
-                              color: workspaceInfo.theme.color_primary_hex,
-                              fontFamily: workspaceInfo.theme.font_name,
-                            }
-                          : {}
-                      }
-                    >
-                      Registre-se agora
-                    </Link>
-                  </span>
                 </div>
               </motion.form>
             ) : (
