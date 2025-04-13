@@ -17,9 +17,11 @@ import { loginSchema, resetSchema } from "./login.schema";
 import { handleFirebaseError } from "@/lib/functions";
 import { authApi } from "@/services/api";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
-import { PageService } from "@/services/page-constructor/page-constructor.service";
-import { TenantDomainsClient } from "@/services/tenant-domains/tenant-domains-client";
 import { setAuthToken, setTenantId } from "@/utils/getAuth";
+import { WorkspaceTheme } from "@/services/workspace-themes/workspace-themes.type";
+import { WorkspaceThemeService } from "@/services/workspace-themes/workspace-theme.service";
+import { PageService } from "@/services/page-constructor/page-constructor.service";
+import { setWorkspaceIdCookie } from "@/app/actions/cookie-actions";
 
 // Define extended page interface that includes name
 interface PageWithName {
@@ -27,6 +29,31 @@ interface PageWithName {
   slug: string;
   workspaceId: string;
   name: string;
+}
+
+// File interface to match the Workspace structure
+interface File {
+  id: string;
+  name: string;
+  extension: string;
+  base_url: string;
+  folder: string;
+  file: string;
+  url: string;
+  size: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface WorkspaceWithTheme {
+  workspace: {
+    id: string;
+    name: string;
+    slug: string;
+    thumbnail?: File;
+    favicon_file?: File | null;
+  } | null;
+  theme: WorkspaceTheme | null;
 }
 
 export function useLoginPage() {
@@ -37,9 +64,12 @@ export function useLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [domainStatus, setDomainStatus] = useState<"checking" | "ready" | "failed">("ready");
-  const [redirectDestination, setRedirectDestination] = useState<"workspace" | "onboarding">("workspace");
   const [showAccessRequest, setShowAccessRequest] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [workspaceInfo, setWorkspaceInfo] = useState<WorkspaceWithTheme>({
+    workspace: null,
+    theme: null,
+  });
 
   const {
     register: loginRegister,
@@ -57,146 +87,79 @@ export function useLoginPage() {
     resolver: zodResolver(resetSchema),
   });
 
+  // Fetch workspace information based on URL when component loads
+  useEffect(() => {
+    async function fetchWorkspaceInfo() {
+      try {
+        // Show loading state at the beginning
+        setIsInitialLoading(true);
+
+        // Get current hostname/URL
+        // const hostname = window.location.hostname;
+        const hostname = "workspace-fny7tvq0.vercel.app";
+
+        // Fetch workspace based on domain
+        const workspace = await WorkspaceService.getWorkspaceByUrl(hostname);
+
+        if (workspace) {
+          // If workspace exists, fetch its theme
+          try {
+            // Use the new WorkspaceThemeService
+            const theme = await WorkspaceThemeService.getThemeByWorkspaceId(workspace.id);
+
+            if (theme) {
+              setWorkspaceInfo({ workspace, theme });
+
+              // Apply style to the page body
+              applyThemeToDom(theme);
+            } else {
+              // If no theme found, just set the workspace
+              setWorkspaceInfo({ workspace, theme: null });
+            }
+          } catch (themeError) {
+            console.error("Error fetching workspace theme:", themeError);
+            setWorkspaceInfo({ workspace, theme: null });
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching workspace information:", err);
+      } finally {
+        // Hide loading indicator after data is fetched or if there's an error
+        setTimeout(() => {
+          setIsInitialLoading(false);
+        }, 1000); // Adding a small delay for smoother transition
+      }
+    }
+
+    fetchWorkspaceInfo();
+  }, []);
+
+  // Função para aplicar o tema ao DOM
+  const applyThemeToDom = (theme: WorkspaceTheme) => {
+    if (!theme) return;
+
+    // Adicionar variáveis CSS na raiz do documento
+    const root = document.documentElement;
+    root.style.setProperty("--color-primary", theme.color_primary_hex);
+    root.style.setProperty("--color-secondary", theme.color_second_hex);
+    root.style.setProperty("--color-background", theme.color_background);
+    root.style.setProperty("--color-text", theme.color_text);
+    root.style.setProperty("--font-family", theme.font_name);
+
+    // Aplicar a fonte se necessário
+    if (theme.font_name && theme.font_name !== "Roboto") {
+      // Aqui poderia carregar a fonte dinamicamente se necessário
+      const link = document.createElement("link");
+      link.href = `https://fonts.googleapis.com/css2?family=${theme.font_name.replace(" ", "+")}&display=swap`;
+      link.rel = "stylesheet";
+      document.head.appendChild(link);
+    }
+  };
+
   // Clear error when step changes
   useEffect(() => {
     setError("");
   }, []);
-
-  // Função para verificar e aguardar disponibilidade do domínio
-  const verifyDomainAvailability = async (tenantId: string) => {
-    try {
-      setDomainStatus("checking");
-
-      // Obter workspaces para usar o nome no domínio
-      const workspaces = await WorkspaceService.getWorkspaces();
-
-      if (!workspaces || workspaces.length === 0) {
-        // Se não houver workspaces, vai redirecionar para onboarding
-        setDomainStatus("ready");
-        return { success: true, isOnboarding: true };
-      }
-
-      const workspace = workspaces[0];
-
-      // Verificar disponibilidade do domínio
-      let attempts = 0;
-      const maxAttempts = 3;
-      let domainReady = false;
-      let lastDomainResult: { success: boolean; url: string; message?: string } | null = null;
-      let domainUrl: string | null = null;
-      let lastError: any = null;
-
-      while (attempts < maxAttempts && !domainReady) {
-        attempts++;
-        console.log(`Tentativa ${attempts} de verificar domínio...`);
-
-        try {
-          // Usar o novo cliente para obter ou registrar o domínio
-          domainUrl = await TenantDomainsClient.getOrRegisterTenantDomain(
-            workspace.name || workspace.slug,
-            tenantId,
-            true // Forçar criação do domínio
-          );
-
-          console.log("Domínio verificado com sucesso via API de domínios:", domainUrl);
-
-          // Armazenar o domínio verificado para uso no redirecionamento
-          if (typeof localStorage !== "undefined" && domainUrl) {
-            localStorage.setItem("verifiedDomain", domainUrl);
-            localStorage.setItem("verifiedDomainTimestamp", Date.now().toString());
-          }
-
-          domainReady = true;
-          lastDomainResult = {
-            success: true,
-            url: domainUrl,
-          };
-          break;
-        } catch (err) {
-          console.error("Erro ao tentar verificar domínio:", err);
-          lastError = err;
-          // Aguardar antes da próxima tentativa
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-      }
-
-      // Se não conseguimos verificar o domínio após todas as tentativas, retornar erro
-      if (!domainReady) {
-        setDomainStatus("failed");
-        const errorMessage =
-          lastError instanceof Error
-            ? lastError.message
-            : "Não foi possível verificar o domínio após várias tentativas. Verifique sua conexão e tente novamente.";
-
-        toast({
-          title: "Erro no serviço de domínios",
-          description: errorMessage,
-          variant: "destructive",
-          duration: 7000,
-        });
-
-        return { success: false, message: errorMessage };
-      }
-
-      // Se chegou aqui, o domínio está pronto para uso
-      setDomainStatus("ready");
-
-      // Obter páginas do workspace para permitir redirecionamento direto
-      try {
-        const pages = await PageService.getAll(workspace.id);
-        const homePage = pages.find((page: any) => page.name === "Página Inicial");
-
-        if (homePage && domainUrl) {
-          // Armazenar informação da página inicial para usar no redirecionamento
-          if (typeof localStorage !== "undefined") {
-            localStorage.setItem("homePageSlug", homePage.slug);
-            localStorage.setItem("workspaceId", workspace.id);
-          }
-
-          return {
-            success: true,
-            domain: domainUrl,
-            pageSlug: homePage.slug,
-            workspaceId: workspace.id,
-          };
-        } else {
-          // Não encontramos a página inicial
-          const errorMessage = "Página inicial não encontrada para o workspace";
-          toast({
-            title: "Erro ao buscar páginas",
-            description: errorMessage,
-            variant: "destructive",
-          });
-          return { success: false, message: errorMessage };
-        }
-      } catch (pageError) {
-        console.error("Erro ao obter páginas para redirecionamento:", pageError);
-        const errorMessage = pageError instanceof Error ? pageError.message : "Erro ao buscar páginas do workspace";
-
-        toast({
-          title: "Erro ao buscar páginas",
-          description: errorMessage,
-          variant: "destructive",
-        });
-
-        return { success: false, message: errorMessage };
-      }
-    } catch (error: any) {
-      console.error("Erro ao verificar domínio:", error);
-      setDomainStatus("failed");
-
-      const errorMessage = error instanceof Error ? error.message : "Problemas ao verificar configuração do ambiente";
-
-      toast({
-        title: "Erro no serviço de domínios",
-        description: errorMessage,
-        variant: "destructive",
-        duration: 7000,
-      });
-
-      return { success: false, message: errorMessage };
-    }
-  };
 
   const handleLogin = async (data: z.infer<typeof loginSchema>) => {
     setIsLoading(true);
@@ -234,44 +197,54 @@ export function useLoginPage() {
       // Também manter compatibilidade com código existente
       Cookies.set("authToken", token, { expires: 7, secure: true, sameSite: "Strict" });
       Cookies.set("tenantId", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
+      Cookies.set("x-tenant", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
 
       // Show success toast
       toast({
         title: "Login realizado com sucesso",
-        description: "Verificando ambiente...",
+        description: "Redirecionando...",
       });
 
       setIsRedirecting(true);
 
-      // Verificar disponibilidade do domínio antes de redirecionar
-      const domainResult = await verifyDomainAvailability(tenantId);
+      try {
+        // Obter os workspaces do usuário
+        const workspaces = await WorkspaceService.getWorkspaces();
 
-      if (!domainResult.success) {
-        // Se falhou, parar o redirecionamento e exibir erro
-        setIsRedirecting(false);
-        setError(domainResult.message || "Falha ao verificar domínio");
-        return;
+        if (!workspaces || workspaces.length === 0) {
+          // Se não houver workspaces, vai redirecionar para onboarding
+          window.location.href = "/onboarding/welcome";
+          return;
+        }
+
+        // Pegar o primeiro workspace
+        const workspace = workspaces[0];
+
+        // Obter as páginas do workspace
+        const pages = await PageService.getAll(workspace.id, token, tenantId);
+
+        if (pages && pages.length > 0) {
+          // Encontrar a página inicial do workspace ou pegar a primeira disponível
+          const homePage = pages.find((page: any) => page.name === "Página Inicial") || pages[0];
+
+          // Store the workspaceId in cookies (client-side for navegação)
+          Cookies.set("workspaceId", workspace.id, { expires: 7, secure: true, sameSite: "Strict" });
+
+          // Também armazenar usando server action para componentes de servidor
+          await setWorkspaceIdCookie(workspace.id);
+
+          // Redirecionar para a rota raiz que agora mostra a página inicial diretamente
+          window.location.href = "/";
+          return;
+        } else {
+          // Caso não tenha nenhuma página, redirecionar para a página raiz
+          window.location.href = "/";
+        }
+      } catch (redirectError) {
+        console.error("Erro ao redirecionar após login:", redirectError);
+        // Em caso de erro no redirecionamento, vamos para a rota padrão
+        window.location.href = "/";
       }
-
-      if (domainResult.isOnboarding) {
-        // Redirecionar para onboarding se for o caso
-        router.push("/onboarding/welcome");
-        return;
-      }
-
-      // Se tiver todas as informações necessárias, redirecionar diretamente
-      if (domainResult.domain && domainResult.pageSlug && domainResult.workspaceId) {
-        const fullUrl = `${domainResult.domain}/${domainResult.pageSlug}?workspaceId=${domainResult.workspaceId}`;
-        console.log("Redirecionando diretamente para:", fullUrl);
-
-        // Usar window.location para redirecionamento entre domínios
-        window.location.href = fullUrl;
-        return;
-      }
-
-      // Se não temos todas as informações, não redirecione e mostre um erro
-      setIsRedirecting(false);
-      setError("Informações de domínio incompletas. Por favor, contate o suporte.");
     } catch (err: any) {
       console.error(err);
       setError(handleFirebaseError(err.code || err.message || "Erro ao fazer login"));
@@ -347,44 +320,54 @@ export function useLoginPage() {
       // Também manter compatibilidade com código existente
       Cookies.set("authToken", token, { expires: 7, secure: true, sameSite: "Strict" });
       Cookies.set("tenantId", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
+      Cookies.set("x-tenant", tenantId, { expires: 7, secure: true, sameSite: "Strict" });
 
       // Show success toast
       toast({
         title: "Login realizado com sucesso",
-        description: "Verificando ambiente...",
+        description: "Redirecionando...",
       });
 
       setIsRedirecting(true);
 
-      // Verificar disponibilidade do domínio antes de redirecionar
-      const domainResult = await verifyDomainAvailability(tenantId);
+      try {
+        // Obter os workspaces do usuário
+        const workspaces = await WorkspaceService.getWorkspaces();
 
-      if (!domainResult.success) {
-        // Se falhou, parar o redirecionamento e exibir erro
-        setIsRedirecting(false);
-        setError(domainResult.message || "Falha ao verificar domínio");
-        return;
+        if (!workspaces || workspaces.length === 0) {
+          // Se não houver workspaces, vai redirecionar para onboarding
+          window.location.href = "/onboarding/welcome";
+          return;
+        }
+
+        // Pegar o primeiro workspace
+        const workspace = workspaces[0];
+
+        // Obter as páginas do workspace
+        const pages = await PageService.getAll(workspace.id, token, tenantId);
+
+        if (pages && pages.length > 0) {
+          // Encontrar a página inicial do workspace ou pegar a primeira disponível
+          const homePage = pages.find((page: any) => page.name === "Página Inicial") || pages[0];
+
+          // Store the workspaceId in cookies (client-side para navegação)
+          Cookies.set("workspaceId", workspace.id, { expires: 7, secure: true, sameSite: "Strict" });
+
+          // Também armazenar usando server action para componentes de servidor
+          await setWorkspaceIdCookie(workspace.id);
+
+          // Redirecionar para a rota raiz que agora mostra a página inicial diretamente
+          window.location.href = "/";
+          return;
+        } else {
+          // Caso não tenha nenhuma página, redirecionar para a página raiz
+          window.location.href = "/";
+        }
+      } catch (redirectError) {
+        console.error("Erro ao redirecionar após login:", redirectError);
+        // Em caso de erro no redirecionamento, vamos para a rota padrão
+        window.location.href = "/";
       }
-
-      if (domainResult.isOnboarding) {
-        // Redirecionar para onboarding se for o caso
-        router.push("/onboarding/welcome");
-        return;
-      }
-
-      // Se tiver todas as informações necessárias, redirecionar diretamente
-      if (domainResult.domain && domainResult.pageSlug && domainResult.workspaceId) {
-        const fullUrl = `${domainResult.domain}/${domainResult.pageSlug}?workspaceId=${domainResult.workspaceId}`;
-        console.log("Redirecionando diretamente para:", fullUrl);
-
-        // Usar window.location para redirecionamento entre domínios
-        window.location.href = fullUrl;
-        return;
-      }
-
-      // Se não temos todas as informações, não redirecione e mostre um erro
-      setIsRedirecting(false);
-      setError("Informações de domínio incompletas. Por favor, contate o suporte.");
     } catch (err: any) {
       console.error(err);
       setError(handleFirebaseError(err.code || err.message || "Erro ao fazer login"));
@@ -415,10 +398,10 @@ export function useLoginPage() {
     resetErrors,
     resetRegister,
     isRedirecting,
-    redirectDestination,
     showAccessRequest,
     setShowAccessRequest,
     handleGoogleLogin,
-    domainStatus,
+    workspaceInfo,
+    isInitialLoading,
   };
 }

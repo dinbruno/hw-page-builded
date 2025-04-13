@@ -14,14 +14,14 @@ export async function middleware(request: NextRequest) {
     pathname === "/login" ||
     pathname === "/sign-up" ||
     pathname === "/forgot-password" ||
-    pathname === "/_root-handler"
+    pathname === "/" // Não processar a rota raiz, deixar o page.tsx cuidar disso
   ) {
     return NextResponse.next();
   }
 
   // Verificar token de autenticação
   const token = request.cookies.get("authToken")?.value;
-  const tenantId = request.cookies.get("tenantId")?.value;
+  const tenantId = request.cookies.get("x-tenant")?.value || request.cookies.get("tenantId")?.value;
 
   // Se não há token ou tenantId, redirecionar para login
   if (!token || !tenantId) {
@@ -31,19 +31,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Verificar se estamos em produção e se é o domínio principal
-  const isMainDomain = process.env.NEXT_PUBLIC_MAIN_DOMAIN && hostname === process.env.NEXT_PUBLIC_MAIN_DOMAIN;
-
-  // Se for o domínio principal e não for em localhost, redirecionar para o subdomínio do tenant
-  if (isMainDomain && !isLocalhost && pathname === "/") {
-    // Este bloco será executado apenas se estamos na raiz do domínio principal
-    return NextResponse.rewrite(new URL("/_root-handler", request.url));
-  }
-
   // Em desenvolvimento local ou em um subdomínio, continuar a requisição
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|_root-handler|favicon.ico).*)"],
+  matcher: [
+    // Excluir rotas específicas do middleware
+    "/((?!_next|api|static|login|sign-up|forgot-password|favicon.ico).*)",
+  ],
 };

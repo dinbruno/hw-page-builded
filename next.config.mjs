@@ -1,16 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  // Normal Next.js app configuration (removed static export settings)
+  reactStrictMode: true,
   images: {
-    unoptimized: true,
-  },
-  trailingSlash: true,
-  reactStrictMode: false,
-  distDir: "out",
-  // Desabilitar algumas verificações durante a build para permitir a exportação estática
-  experimental: {
-    // Desabilitar temporariamente a otimização de fontes
-    optimizeFonts: false,
+    domains: ["firebasestorage.googleapis.com", "storage.googleapis.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+    ],
   },
 };
 

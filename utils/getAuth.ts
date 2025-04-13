@@ -24,11 +24,11 @@ export const getTenantId = () => {
   try {
     // Apenas implementação para o lado do cliente
     if (typeof document !== "undefined") {
-      const tenantCookie = document.cookie.split("; ").find((row) => row.startsWith("tenantId="));
+      const tenantCookie = document.cookie.split("; ").find((row) => row.startsWith("x-tenant="));
 
       // Se não encontrar nos cookies, tenta no localStorage como backup
       if (!tenantCookie && typeof localStorage !== "undefined") {
-        return localStorage.getItem("tenantId") || undefined;
+        return localStorage.getItem("x-tenant") || undefined;
       }
 
       return tenantCookie ? tenantCookie.split("=")[1] : undefined;
@@ -76,12 +76,12 @@ export const setTenantId = (tenantId: string, expires = 7) => {
     if (typeof document !== "undefined") {
       const date = new Date();
       date.setTime(date.getTime() + expires * 24 * 60 * 60 * 1000);
-      document.cookie = `tenantId=${tenantId}; expires=${date.toUTCString()}; path=/; secure; samesite=strict`;
+      document.cookie = `x-tenant=${tenantId}; expires=${date.toUTCString()}; path=/; secure; samesite=strict`;
     }
 
     // Definir no localStorage como backup
     if (typeof localStorage !== "undefined") {
-      localStorage.setItem("tenantId", tenantId);
+      localStorage.setItem("x-tenant", tenantId);
     }
   } catch (error) {
     console.error("Error setting tenant ID:", error);
@@ -96,13 +96,13 @@ export const clearAuth = () => {
     // Limpar cookies
     if (typeof document !== "undefined") {
       document.cookie = "authToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "tenantId=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "x-tenant=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
 
     // Limpar localStorage
     if (typeof localStorage !== "undefined") {
       localStorage.removeItem("authToken");
-      localStorage.removeItem("tenantId");
+      localStorage.removeItem("x-tenant");
     }
   } catch (error) {
     console.error("Error clearing auth data:", error);

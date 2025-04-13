@@ -5,14 +5,15 @@ export interface Page {
   slug: string;
   workspaceId: string;
   name?: string;
+  content?: any;
 }
 
 export class PageService {
   private static cache: Record<string, { data: any; timestamp: number }> = {};
-  private static CACHE_DURATION = 5 * 1000;
+  private static CACHE_DURATION = 5 * 1000; // 5 seconds cache
   private static API_URL = process.env.NEXT_PUBLIC_API_CORE_URL_PROD || "http://localhost:4000";
 
-  static async getById(pageId: string, workspaceId?: string): Promise<Page> {
+  static async getById(pageId: string, workspaceId?: string, serverToken?: string, serverTenantId?: string): Promise<Page> {
     const cacheKey = `id:${pageId}`;
 
     if (this.cache[cacheKey] && Date.now() - this.cache[cacheKey].timestamp < this.CACHE_DURATION) {
@@ -22,13 +23,14 @@ export class PageService {
     try {
       console.log("PageService: Buscando página por ID", { pageId, workspaceId });
 
-      // Usar getHeaders para incluir token e tenant ID
-      const headers = getHeaders();
+      // Use server-side headers if provided, otherwise client-side
+      const headers = getHeaders(serverToken, serverTenantId);
       console.log("PageService: Headers para a requisição", headers);
 
       const apiUrl = `${this.API_URL}/pages/${pageId}`;
       const response = await fetch(apiUrl, {
         headers,
+        next: { revalidate: 60 }, // Revalidate cache every 60 seconds
       });
 
       console.log("PageService: Resposta da API", {
@@ -57,7 +59,7 @@ export class PageService {
     }
   }
 
-  static async getBySlug(slug: string, workspaceId?: string): Promise<Page> {
+  static async getBySlug(slug: string, workspaceId?: string, serverToken?: string, serverTenantId?: string): Promise<Page> {
     const cacheKey = `slug:${slug}`;
 
     if (this.cache[cacheKey] && Date.now() - this.cache[cacheKey].timestamp < this.CACHE_DURATION) {
@@ -67,8 +69,8 @@ export class PageService {
     try {
       console.log("PageService: Buscando página por slug", { slug, workspaceId });
 
-      // Usar getHeaders para incluir token e tenant ID
-      const headers = getHeaders();
+      // Use server-side headers if provided, otherwise client-side
+      const headers = getHeaders(serverToken, serverTenantId);
       console.log("PageService: Headers para a requisição", headers);
 
       const url = new URL(`${this.API_URL}/pages/by-slug/${slug}`);
@@ -78,6 +80,7 @@ export class PageService {
 
       const response = await fetch(url.toString(), {
         headers,
+        next: { revalidate: 60 }, // Revalidate cache every 60 seconds
       });
 
       console.log("PageService: Resposta da API", {
@@ -106,7 +109,7 @@ export class PageService {
     }
   }
 
-  static async getAll(workspaceId?: string): Promise<Page[]> {
+  static async getAll(workspaceId?: string, serverToken?: string, serverTenantId?: string): Promise<Page[]> {
     const cacheKey = `all:${workspaceId || "all"}`;
 
     if (this.cache[cacheKey] && Date.now() - this.cache[cacheKey].timestamp < this.CACHE_DURATION) {
@@ -116,8 +119,8 @@ export class PageService {
     try {
       console.log("PageService: Buscando todas as páginas", { workspaceId });
 
-      // Usar getHeaders para incluir token e tenant ID
-      const headers = getHeaders();
+      // Use server-side headers if provided, otherwise client-side
+      const headers = getHeaders(serverToken, serverTenantId);
       console.log("PageService: Headers para a requisição", headers);
 
       const url = new URL(`${this.API_URL}/pages`);
@@ -127,6 +130,7 @@ export class PageService {
 
       const response = await fetch(url.toString(), {
         headers,
+        next: { revalidate: 60 }, // Revalidate cache every 60 seconds
       });
 
       console.log("PageService: Resposta da API", {

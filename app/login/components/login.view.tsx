@@ -31,17 +31,43 @@ export function LoginView(props: any) {
     resetErrors,
     resetRegister,
     isRedirecting,
-    redirectDestination,
     showAccessRequest,
     setShowAccessRequest,
     handleGoogleLogin,
-    domainStatus,
+    workspaceInfo,
   } = props;
 
   const [rememberMe, setRememberMe] = useState(false);
 
+  // Custom styles based on the workspace theme
+  const buttonStyle = workspaceInfo.theme
+    ? {
+        backgroundColor: workspaceInfo.theme.color_primary_hex,
+        color: "#FFFFFF", // Contrasting text color
+        "&:hover": {
+          backgroundColor: adjustColor(workspaceInfo.theme.color_primary_hex, -20), // Darken for hover
+        },
+      }
+    : {};
+
+  // Helper function to adjust color brightness
+  function adjustColor(hex: string, percent: number) {
+    // Convert hex to RGB
+    let r = parseInt(hex.slice(1, 3), 16);
+    let g = parseInt(hex.slice(3, 5), 16);
+    let b = parseInt(hex.slice(5, 7), 16);
+
+    // Adjust brightness
+    r = Math.max(0, Math.min(255, r + percent));
+    g = Math.max(0, Math.min(255, g + percent));
+    b = Math.max(0, Math.min(255, b + percent));
+
+    // Convert back to hex
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  }
+
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background" style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_background } : {}}>
       <AnimatePresence>
         {isRedirecting && (
           <motion.div
@@ -62,15 +88,16 @@ export function LoginView(props: any) {
                     ease: "linear",
                   }}
                 >
-                  {domainStatus === "checking" ? <Server className="h-12 w-12 text-amber-500" /> : <Loader2 className="h-12 w-12 text-primary" />}
+                  <Loader2 className="h-12 w-12 text-primary" style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_primary_hex } : {}} />
                 </motion.div>
                 <motion.h2
                   className="text-xl font-semibold mt-4"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
+                  style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}
                 >
-                  {domainStatus === "checking" ? "Verificando ambiente" : "Redirecionando"}
+                  Redirecionando
                 </motion.h2>
                 <motion.p
                   className="text-muted-foreground text-center mt-2"
@@ -78,30 +105,8 @@ export function LoginView(props: any) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  {domainStatus === "checking"
-                    ? "Estamos verificando a disponibilidade do ambiente. Isso pode levar alguns segundos..."
-                    : redirectDestination === "workspace"
-                    ? "Você está sendo redirecionado para seu workspace"
-                    : "Você está sendo redirecionado para o onboarding"}
+                  Você está sendo redirecionado para seu workspace
                 </motion.p>
-                {domainStatus === "checking" && (
-                  <motion.div
-                    className="w-full max-w-xs h-2 bg-secondary mt-6 rounded-full overflow-hidden"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <motion.div
-                      className="h-full bg-amber-500"
-                      initial={{ width: "0%" }}
-                      animate={{ width: "100%" }}
-                      transition={{
-                        duration: 6,
-                        ease: "linear",
-                      }}
-                    />
-                  </motion.div>
-                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -138,12 +143,27 @@ export function LoginView(props: any) {
       <div className="flex flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 w-full lg:w-1/2">
         <div className="mx-auto w-full max-w-sm lg:max-w-md">
           <motion.div className="mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <Image className="w-[200px]" src="/Logo.png" alt="Logo da empresa" width={800} height={800} />
+            {workspaceInfo.workspace?.favicon_file?.url ? (
+              <Image
+                className="w-[200px]"
+                src={workspaceInfo.workspace.favicon_file.url}
+                alt={`Logo de ${workspaceInfo.workspace.name || "empresa"}`}
+                width={200}
+                height={200}
+              />
+            ) : (
+              <Image className="w-[200px]" src="/Logo.png" alt="Logo da empresa" width={200} height={200} />
+            )}
           </motion.div>
 
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <h2 className="text-3xl font-bold tracking-tight">{step === 0 ? "Entrar na plataforma" : "Recuperar senha"}</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
+            <h2
+              className="text-3xl font-bold tracking-tight"
+              style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text, fontFamily: workspaceInfo.theme.font_name } : {}}
+            >
+              {step === 0 ? "Entrar na plataforma" : "Recuperar senha"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground" style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>
               {step === 0 ? "Acesse sua conta para continuar" : "Informe seu email para receber instruções de recuperação"}
             </p>
           </motion.div>
@@ -151,8 +171,8 @@ export function LoginView(props: any) {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="mt-6">
             <Alert variant="default" className="bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
               <Info className="h-4 w-4 text-blue-500" />
-              <AlertTitle>Acesso restrito</AlertTitle>
-              <AlertDescription>
+              <AlertTitle style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Acesso restrito</AlertTitle>
+              <AlertDescription style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>
                 Para acessar esta plataforma, você precisa de uma conta autorizada. Se você não tem acesso, entre em contato com o administrador do
                 seu tenant.
               </AlertDescription>
@@ -170,7 +190,13 @@ export function LoginView(props: any) {
                 key="social-login"
               >
                 <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" onClick={handleGoogleLogin} disabled={isLoading} className="w-full">
+                  <Button
+                    variant="outline"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                    className="w-full"
+                    style={{ borderColor: workspaceInfo.theme?.color_primary_hex }}
+                  >
                     <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
                       <path
                         fill="#EA4335"
@@ -189,16 +215,16 @@ export function LoginView(props: any) {
                         d="M24 46c5.86 0 10.78-1.92 14.37-5.21L31.8 35.62C30.11 36.65 27.77 37 24 37c-6.14 0-11.31-5.36-12.6-12.48L4.77 30.05C7.4 40.05 14.92 46 24 46z"
                       />
                     </svg>
-                    Google
+                    <span style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Google</span>
                   </Button>
-                  <Button variant="outline" disabled={isLoading} className="w-full">
+                  <Button variant="outline" disabled={isLoading} className="w-full" style={{ borderColor: workspaceInfo.theme?.color_primary_hex }}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" viewBox="0 0 48 48">
                       <path fill="#F25022" d="M22 22H3V3h19v19z" />
                       <path fill="#00A4EF" d="M45 22H26V3h19v19z" />
                       <path fill="#7FBA00" d="M45 45H26V26h19v19z" />
                       <path fill="#FFB900" d="M22 45H3V26h19v19z" />
                     </svg>
-                    Microsoft
+                    <span style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Microsoft</span>
                   </Button>
                 </div>
               </motion.div>
@@ -207,18 +233,31 @@ export function LoginView(props: any) {
 
           <div className="relative mt-6">
             <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
+              <Separator className="w-full" style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_second_hex } : {}} />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">ou continue com</span>
+              <span
+                className="bg-background px-2 text-muted-foreground"
+                style={
+                  workspaceInfo.theme
+                    ? {
+                        backgroundColor: workspaceInfo.theme.color_background,
+                        color: workspaceInfo.theme.color_text,
+                        fontFamily: workspaceInfo.theme.font_name,
+                      }
+                    : {}
+                }
+              >
+                ou continue com
+              </span>
             </div>
           </div>
 
           {error && (
             <Alert variant="destructive" className="mt-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
+              <AlertTitle style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Erro</AlertTitle>
+              <AlertDescription style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>{error}</AlertDescription>
             </Alert>
           )}
 
@@ -234,15 +273,57 @@ export function LoginView(props: any) {
                 className="space-y-4 mt-6"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="seu@email.com" autoComplete="email" disabled={isLoading} {...loginRegister("email")} />
-                  {loginErrors.email && <p className="text-sm text-destructive mt-1">{String(loginErrors.email.message)}</p>}
+                  <Label
+                    htmlFor="email"
+                    style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name, color: workspaceInfo.theme.color_text } : {}}
+                  >
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    autoComplete="email"
+                    disabled={isLoading}
+                    {...loginRegister("email")}
+                    style={
+                      workspaceInfo.theme
+                        ? {
+                            borderColor: workspaceInfo.theme.color_second_hex,
+                            fontFamily: workspaceInfo.theme.font_name,
+                          }
+                        : {}
+                    }
+                  />
+                  {loginErrors.email && (
+                    <p className="text-sm text-destructive mt-1" style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>
+                      {String(loginErrors.email.message)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Senha</Label>
-                    <Button variant="link" className="px-0 font-normal text-xs" onClick={() => setStep(1)} type="button">
+                    <Label
+                      htmlFor="password"
+                      style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name, color: workspaceInfo.theme.color_text } : {}}
+                    >
+                      Senha
+                    </Label>
+                    <Button
+                      variant="link"
+                      className="px-0 font-normal text-xs"
+                      onClick={() => setStep(1)}
+                      type="button"
+                      style={
+                        workspaceInfo.theme
+                          ? {
+                              color: workspaceInfo.theme.color_primary_hex,
+                              fontFamily: workspaceInfo.theme.font_name,
+                            }
+                          : {}
+                      }
+                    >
                       Esqueceu a senha?
                     </Button>
                   </div>
@@ -253,34 +334,73 @@ export function LoginView(props: any) {
                     autoComplete="current-password"
                     disabled={isLoading}
                     {...loginRegister("password")}
+                    style={
+                      workspaceInfo.theme
+                        ? {
+                            borderColor: workspaceInfo.theme.color_second_hex,
+                            fontFamily: workspaceInfo.theme.font_name,
+                          }
+                        : {}
+                    }
                   />
-                  {loginErrors.password && <p className="text-sm text-destructive mt-1">{String(loginErrors.password.message)}</p>}
+                  {loginErrors.password && (
+                    <p className="text-sm text-destructive mt-1" style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>
+                      {String(loginErrors.password.message)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <Checkbox id="remember" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
-                  <Label htmlFor="remember" className="text-sm font-normal">
+                  <Label
+                    htmlFor="remember"
+                    className="text-sm font-normal"
+                    style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name, color: workspaceInfo.theme.color_text } : {}}
+                  >
                     Lembrar de mim
                   </Label>
                 </div>
 
                 <div className="pt-2">
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                    style={
+                      workspaceInfo.theme
+                        ? {
+                            backgroundColor: workspaceInfo.theme.color_primary_hex,
+                            fontFamily: workspaceInfo.theme.font_name,
+                          }
+                        : {}
+                    }
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Entrando...
+                        <span style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Entrando...</span>
                       </>
                     ) : (
-                      "Entrar"
+                      <span style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Entrar</span>
                     )}
                   </Button>
                 </div>
 
                 <div className="text-center text-sm">
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground" style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>
                     Não tem uma conta?{" "}
-                    <Link href="/sign-up" className="text-primary hover:underline">
+                    <Link
+                      href="/sign-up"
+                      className="text-primary hover:underline"
+                      style={
+                        workspaceInfo.theme
+                          ? {
+                              color: workspaceInfo.theme.color_primary_hex,
+                              fontFamily: workspaceInfo.theme.font_name,
+                            }
+                          : {}
+                      }
+                    >
                       Registre-se agora
                     </Link>
                   </span>
@@ -297,26 +417,74 @@ export function LoginView(props: any) {
                 className="space-y-4 mt-6"
               >
                 <div className="space-y-2">
-                  <Label htmlFor="emailToReset">Email</Label>
-                  <Input id="emailToReset" type="email" placeholder="seu@email.com" disabled={isLoading} {...resetRegister("emailToReset")} />
-                  {resetErrors.emailToReset && <p className="text-sm text-destructive mt-1">{String(resetErrors.emailToReset.message)}</p>}
+                  <Label
+                    htmlFor="emailToReset"
+                    style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name, color: workspaceInfo.theme.color_text } : {}}
+                  >
+                    Email
+                  </Label>
+                  <Input
+                    id="emailToReset"
+                    type="email"
+                    placeholder="seu@email.com"
+                    disabled={isLoading}
+                    {...resetRegister("emailToReset")}
+                    style={
+                      workspaceInfo.theme
+                        ? {
+                            borderColor: workspaceInfo.theme.color_second_hex,
+                            fontFamily: workspaceInfo.theme.font_name,
+                          }
+                        : {}
+                    }
+                  />
+                  {resetErrors.emailToReset && (
+                    <p className="text-sm text-destructive mt-1" style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>
+                      {String(resetErrors.emailToReset.message)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="pt-2">
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isLoading}
+                    style={
+                      workspaceInfo.theme
+                        ? {
+                            backgroundColor: workspaceInfo.theme.color_primary_hex,
+                            fontFamily: workspaceInfo.theme.font_name,
+                          }
+                        : {}
+                    }
+                  >
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
+                        <span style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Enviando...</span>
                       </>
                     ) : (
-                      "Enviar instruções"
+                      <span style={workspaceInfo.theme ? { fontFamily: workspaceInfo.theme.font_name } : {}}>Enviar instruções</span>
                     )}
                   </Button>
                 </div>
 
                 <div className="text-center text-sm">
-                  <Button variant="link" className="p-0 font-normal" onClick={() => setStep(0)} type="button">
+                  <Button
+                    variant="link"
+                    className="p-0 font-normal"
+                    onClick={() => setStep(0)}
+                    type="button"
+                    style={
+                      workspaceInfo.theme
+                        ? {
+                            color: workspaceInfo.theme.color_primary_hex,
+                            fontFamily: workspaceInfo.theme.font_name,
+                          }
+                        : {}
+                    }
+                  >
                     Voltar para o login
                   </Button>
                 </div>
@@ -332,6 +500,7 @@ export function LoginView(props: any) {
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
+          style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_second_hex + "33" } : {}} // Adding 33 for opacity
         >
           <div className="flex flex-col items-center justify-center p-8">
             <motion.h1
@@ -339,12 +508,36 @@ export function LoginView(props: any) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.5 }}
+              style={
+                workspaceInfo.theme
+                  ? {
+                      color: workspaceInfo.theme.color_text,
+                      fontFamily: workspaceInfo.theme.font_name,
+                    }
+                  : {}
+              }
             >
-              Bem-vindo à sua plataforma de trabalho
+              {workspaceInfo.workspace?.name ? `Bem-vindo ao ${workspaceInfo.workspace.name}` : "Bem-vindo à sua plataforma de trabalho"}
             </motion.h1>
 
             <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.8 }}>
-              <Image className="object-cover w-4/5 mx-auto" src="/LoginHero.png" alt="Imagem ilustrativa da plataforma" width={1920} height={1080} />
+              {workspaceInfo.workspace?.thumbnail?.url ? (
+                <Image
+                  className="object-cover w-4/5 mx-auto rounded-lg shadow-lg"
+                  src={workspaceInfo.workspace.thumbnail.url}
+                  alt={`Imagem de ${workspaceInfo.workspace.name || "destaque"}`}
+                  width={1920}
+                  height={1080}
+                />
+              ) : (
+                <Image
+                  className="object-cover w-4/5 mx-auto"
+                  src="/LoginHero.png"
+                  alt="Imagem ilustrativa da plataforma"
+                  width={1920}
+                  height={1080}
+                />
+              )}
             </motion.div>
           </div>
         </motion.div>

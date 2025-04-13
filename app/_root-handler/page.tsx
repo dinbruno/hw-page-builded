@@ -2,15 +2,31 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { PageService } from "@/services/page-constructor/page-constructor.service";
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
-import { TenantDomainsClient } from "@/services/tenant-domains/tenant-domains-client";
+import { PageRenderer } from "@/components/static-renderer/page-renderer";
+import { notFound } from "next/navigation";
+import dynamic from "next/dynamic";
+
+// Dynamic import with no SSR to prevent hydration issues
+const DynamicPageRenderer = dynamic(() => import("@/components/static-renderer/page-renderer").then((mod) => ({ default: mod.PageRenderer })), {
+  ssr: false,
+});
 
 // This is an internal route handler for the root route (/)
-// It's accessed via middleware rewrite, not directly by users
+// It renders the homepage directly without redirecting
 export default async function RootHandler() {
+  console.log("_root-handler iniciado");
+
   // Verificar cookies para garantir autenticação
   const cookieStore = cookies();
   const authToken = cookieStore.get("authToken")?.value;
-  const tenantId = cookieStore.get("tenantId")?.value;
+  const tenantId = cookieStore.get("x-tenant")?.value || cookieStore.get("tenantId")?.value;
+  const workspaceId = cookieStore.get("workspaceId")?.value;
+
+  console.log("Cookies encontrados:", {
+    authToken: !!authToken,
+    tenantId: !!tenantId,
+    workspaceId: !!workspaceId,
+  });
 
   if (!authToken || !tenantId) {
     console.log("Redirecionando para login por falta de credenciais");
@@ -19,50 +35,123 @@ export default async function RootHandler() {
 
   try {
     console.log("Obtendo workspaces...");
-    // Get the user's workspaces
-    const workspaces = await WorkspaceService.getWorkspaces();
-    console.log("Workspaces obtidos:", workspaces?.length || 0);
+    // Se já temos o workspaceId, podemos pular a obtenção de workspaces
+    let currentWorkspaceId = workspaceId;
 
-    if (workspaces && workspaces.length > 0) {
-      const workspace = workspaces[0];
-      console.log("Obtendo páginas para workspace:", workspace.id);
+    if (!currentWorkspaceId) {
+      // Get the user's workspaces
+      const workspaces = await WorkspaceService.getWorkspaces();
+      console.log("Workspaces obtidos:", workspaces?.length || 0);
 
-      // Obter todas as páginas do workspace
-      const pages = await PageService.getAll(workspace.id);
+      if (!workspaces || workspaces.length === 0) {
+        // No workspaces, redirect to onboarding
+        console.log("Sem workspaces, redirecionando para onboarding");
+        return redirect("/onboarding/welcome");
+      }
+
+      // Use first workspace
+      currentWorkspaceId = workspaces[0].id;
+      console.log("Usando o primeiro workspace:", currentWorkspaceId);
+    }
+
+    console.log("Usando workspace:", currentWorkspaceId);
+
+    try {
+      // Tentar obter a página diretamente pelo nome "Página Inicial"
+      console.log("Buscando páginas para o workspace:", currentWorkspaceId);
+      const pages = await PageService.getAll(currentWorkspaceId, authToken, tenantId);
       console.log("Páginas obtidas:", pages?.length || 0);
 
-      // Encontrar a página inicial do workspace
-      const homePage = pages.find((page: any) => page.name === "Página Inicial");
-      console.log("Página inicial encontrada:", homePage?.slug || "não encontrada");
+      if (!pages || pages.length === 0) {
+        console.log("Nenhuma página encontrada para o workspace");
 
-      // Verificar se já existe um domínio para este tenant ou criar um novo
-      console.log("Verificando/criando domínio para tenant...");
-      const domainUrl = await TenantDomainsClient.getOrRegisterTenantDomain(
-        workspace.name || workspace.slug,
-        tenantId,
-        true // Forçar criação do domínio se necessário
+        // Tentativa de fallback - criar uma página em branco ou mostrar página de boas-vindas
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen">
+            <h1 className="text-3xl font-bold mb-4">Bem-vindo ao seu workspace</h1>
+            <p className="text-lg mb-6">Você ainda não tem nenhuma página. Crie sua primeira página para começar.</p>
+            <button
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
+              onClick={() => (window.location.href = "/create-page")}
+            >
+              Criar Página
+            </button>
+          </div>
+        );
+      }
+
+      // Debug: Listar todas as páginas encontradas
+      console.log(
+        "Páginas disponíveis:",
+        pages.map((p) => ({ id: p.id, name: p.name, slug: p.slug }))
       );
 
-      console.log("Domínio obtido:", domainUrl);
+      // Encontrar a página inicial do workspace ou usar a primeira disponível
+      const homePage =
+        pages.find((page: any) => page.name === "Página Inicial" || page.name === "Home" || page.slug === "pagina-inicial" || page.slug === "home") ||
+        pages[0];
 
-      if (homePage) {
-        // Redirecionar para a página inicial no domínio do tenant
-        const fullUrl = `${domainUrl}/${homePage.slug}?workspaceId=${workspace.id}`;
-        console.log("Redirecionando para página inicial no domínio do tenant:", fullUrl);
-        return redirect(fullUrl);
-      } else {
-        // Caso não tenha encontrado a página inicial, redirecionar para o fallback no subdomínio do tenant
-        const fallbackUrl = `${domainUrl}/workspace/${workspace.slug}`;
-        console.log("Página inicial não encontrada. Redirecionando para workspace no domínio do tenant:", fallbackUrl);
-        return redirect(fallbackUrl);
+      if (!homePage) {
+        console.log("Nenhuma página inicial encontrada mesmo com páginas disponíveis");
+        return notFound();
       }
-    } else {
-      // No workspaces, redirect to onboarding
-      console.log("Sem workspaces, redirecionando para onboarding");
-      return redirect("/onboarding/welcome");
+
+      console.log("Página inicial encontrada:", homePage.id, homePage.name, homePage.slug);
+
+      // Obter os dados completos da página
+      console.log("Buscando dados completos da página:", homePage.id);
+      const pageData = await PageService.getById(homePage.id, currentWorkspaceId, authToken, tenantId);
+      console.log("Dados da página obtidos:", !!pageData, pageData?.id);
+
+      if (!pageData) {
+        console.log("Dados da página não encontrados");
+        return notFound();
+      }
+
+      // Verificar se a página tem conteúdo
+      if (!pageData.content) {
+        console.log("A página não tem conteúdo");
+        return (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Página sem conteúdo</h1>
+              <p>Esta página ainda não possui conteúdo para exibir.</p>
+            </div>
+          </div>
+        );
+      }
+
+      // Armazenar o workspaceId nos cookies do servidor para futuras requisições
+      cookies().set("workspaceId", currentWorkspaceId, {
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      });
+
+      console.log("Renderizando página inicial");
+
+      // Tentar renderizar com um try/catch para capturar erros de renderização
+      try {
+        // Usar o componente Dynamic para evitar problemas de hidratação
+        return <DynamicPageRenderer pageData={pageData} />;
+      } catch (renderError) {
+        console.error("Erro ao renderizar a página:", renderError);
+        return (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Erro ao carregar a página</h1>
+              <p>Houve um problema ao renderizar esta página. Por favor, tente novamente mais tarde.</p>
+            </div>
+          </div>
+        );
+      }
+    } catch (pageError) {
+      console.error("Erro ao obter dados da página:", pageError);
+      return notFound();
     }
   } catch (error) {
-    console.error("Error in root handler redirection:", error);
+    console.error("Error in root handler:", error);
     // Fallback to login page if any error occurs
     return redirect("/login");
   }

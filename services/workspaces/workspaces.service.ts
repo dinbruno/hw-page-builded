@@ -94,6 +94,37 @@ export class WorkspaceService {
     return this.handleResponse<Workspace>(response);
   }
 
+  /**
+   * Retorna o workspace com base na URL fornecida.
+   * Se não for encontrado, retorna null.
+   */
+  static async getWorkspaceByUrl(url: string): Promise<Workspace | null> {
+    if (!API_URL) {
+      throw new Error("API_URL is not defined");
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/workspaces/domain/${url}`, {
+        method: "GET",
+        headers: getHeaders(),
+        cache: "no-store",
+      });
+
+      console.log("WorkspaceService.getWorkspaceByUrl", response.status);
+
+      // Se retornou 404, significa que não existe workspace com essa URL
+      if (response.status === 404) {
+        return null;
+      }
+
+      // Para qualquer outro status que não seja 2xx, handleResponse jogará erro
+      return this.handleResponse<Workspace>(response);
+    } catch (error) {
+      console.error("Error in getWorkspaceByUrl:", error);
+      return null;
+    }
+  }
+
   static async deleteWorkspace(id: string): Promise<void> {
     if (!API_URL) {
       throw new Error("API_URL is not defined");
