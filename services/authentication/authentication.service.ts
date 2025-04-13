@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL_PROD;
+const API_URL = process.env.NEXT_PUBLIC_AUTH_API_URL_PROD;
 
 export interface AuthUser {
   uuid: string;

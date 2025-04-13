@@ -1,17 +1,13 @@
 import axios from "axios";
 import { getAuthToken, getTenantId } from "../utils/getAuth";
-
-// Define API base URLs based on environment
-const isLocal = process.env.NODE_ENV === "development";
-
 // Auth API configuration
 export const authApi = axios.create({
-  baseURL: isLocal ? process.env.NEXT_PUBLIC_AUTH_API_URL : process.env.NEXT_PUBLIC_AUTH_API_URL_PROD,
+  baseURL: process.env.NEXT_PUBLIC_AUTH_API_URL_PROD,
 });
 
 // Core API configuration
 export const api = axios.create({
-  baseURL: isLocal ? process.env.API_CORE_URL : process.env.API_CORE_URL_PROD,
+  baseURL: process.env.NEXT_PUBLIC_API_CORE_URL_PROD,
 });
 
 // Interceptor para adicionar automaticamente o token e tenant ID

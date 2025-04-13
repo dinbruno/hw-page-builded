@@ -20,7 +20,7 @@ export interface TenantDomainListResponse {
  */
 export class TenantDomainsClient {
   // URL base da API
-  private static API_URL = process.env.NEXT_PUBLIC_API_CORE_URL_PROD;
+  private static API_URL = process.env.NEXT_PUBLIC_API_CORE_URL_PROD || "http://localhost:4000";
 
   /**
    * Obtém o token de autenticação do armazenamento local
@@ -88,16 +88,21 @@ export class TenantDomainsClient {
     const token = this.getAuthToken();
     if (token) {
       newHeaders["Authorization"] = `Bearer ${token}`;
+    } else {
+      console.warn("TenantDomainsClient: Token de autenticação não encontrado");
     }
 
     // Adicionar tenant ID
     const tenantId = tenantIdOverride || this.getTenantId();
     if (tenantId) {
       newHeaders["x-tenant-id"] = tenantId;
+      // Log para verificar se o header está sendo adicionado
+      console.log("TenantDomainsClient: Adicionando header x-tenant-id", tenantId);
     } else if (forceIncludeTenantId) {
-      console.warn("TenantDomainsClient: Tenant ID não encontrado. Algumas operações podem falhar.");
+      console.error("TenantDomainsClient: Tenant ID não encontrado. Algumas operações podem falhar.");
     }
 
+    console.log("TenantDomainsClient: Headers finais:", newHeaders);
     return newHeaders;
   }
 
@@ -112,31 +117,109 @@ export class TenantDomainsClient {
       console.log("TenantDomainsClient: Gerando URL para tenant", {
         workspaceName,
         tenantId,
+        API_URL: this.API_URL,
       });
+
+      if (!this.API_URL) {
+        // Se API_URL não estiver definida, criar um subdomínio localmente
+        console.warn("API_URL não definida, gerando subdomínio localmente");
+        return this.createLocalSubdomain(workspaceName, tenantId);
+      }
+
+      if (!tenantId) {
+        console.error("TenantDomainsClient: tenantId não fornecido");
+        throw new Error("ID do tenant não fornecido. Verifique se você está autenticado corretamente.");
+      }
+
+      const headers = this.addAuthHeaders(
+        {
+          "Content-Type": "application/json",
+        },
+        true,
+        tenantId
+      );
+
+      // Verificação adicional para garantir que o header x-tenant-id esteja presente
+      if (!headers["x-tenant-id"]) {
+        console.error("TenantDomainsClient: Header x-tenant-id não foi adicionado para generateTenantUrl", headers);
+        throw new Error("Header x-tenant-id não foi adicionado. Verifique o ID do tenant.");
+      }
 
       const response = await fetch(`${this.API_URL}/tenant-domains/generate-url`, {
         method: "POST",
-        headers: this.addAuthHeaders(
-          {
-            "Content-Type": "application/json",
-          },
-          true,
-          tenantId
-        ),
+        headers,
         body: JSON.stringify({ workspaceName, tenantId }),
       });
 
+      console.log("TenantDomainsClient: Resposta da API de geração de URL", {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      });
+
       if (!response.ok) {
-        throw new Error(`Erro ao gerar URL: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Erro ${response.status}: ${response.statusText}`;
+        console.error("TenantDomainsClient: Erro na resposta ao gerar URL:", errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log("TenantDomainsClient: URL gerada com sucesso:", data.url);
+
+      if (!data.url) {
+        throw new Error("A API retornou uma resposta sem URL.");
+      }
+
       return data.url;
     } catch (error) {
       console.error("TenantDomainsClient: Erro ao gerar URL do tenant:", error);
-      // Fallback para um formato padrão se houver erro
-      return `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_NAME || "app"}.vercel.app`;
+
+      // Se o erro for relacionado à falta de headers, não usar fallback
+      if (error instanceof Error && (error.message.includes("Header x-tenant-id") || error.message.includes("ID do tenant não fornecido"))) {
+        throw error;
+      }
+
+      // Fallback para um formato padrão se houver outro tipo de erro
+      return this.createLocalSubdomain(workspaceName, tenantId);
     }
+  }
+
+  /**
+   * Cria um subdomínio local baseado no nome do workspace e ID do tenant
+   * @param workspaceName Nome do workspace
+   * @param tenantId ID do tenant
+   * @returns URL formatada para o tenant
+   */
+  private static createLocalSubdomain(workspaceName: string, tenantId: string): string {
+    // Normalizar o nome do workspace para um formato válido de subdomínio
+    const normalizedName = workspaceName
+      ? workspaceName
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "")
+      : "tenant";
+
+    // Usar os primeiros 8 caracteres do ID do tenant
+    const shortTenantId = tenantId ? tenantId.substring(0, 8) : "default";
+
+    // Criar o nome do subdomínio
+    const subdomainName = `${normalizedName}-${shortTenantId}`;
+
+    // Usar o nome do projeto da Vercel ou "app" como fallback
+    const projectName = process.env.NEXT_PUBLIC_VERCEL_PROJECT_NAME || "app";
+
+    console.log(`TenantDomainsClient: Criando subdomínio local: ${subdomainName}.${projectName}.vercel.app`);
+    console.log(`TenantDomainsClient: ATENÇÃO - Esta URL é um fallback e pode não funcionar corretamente sem o registro adequado.`);
+    console.log(`TenantDomainsClient: Variáveis de ambiente disponíveis:`, {
+      NEXT_PUBLIC_API_CORE_URL_PROD: process.env.NEXT_PUBLIC_API_CORE_URL_PROD,
+      NEXT_PUBLIC_VERCEL_PROJECT_NAME: process.env.NEXT_PUBLIC_VERCEL_PROJECT_NAME,
+    });
+
+    return `https://${subdomainName}.${projectName}.vercel.app`;
   }
 
   /**
@@ -151,30 +234,70 @@ export class TenantDomainsClient {
       console.log("TenantDomainsClient: Tentando registrar domínio para", {
         workspaceName,
         tenantId,
+        API_URL: this.API_URL,
       });
+
+      if (!this.API_URL) {
+        console.error("TenantDomainsClient: API_URL não definida");
+        throw new Error("API_URL não está definida. Verifique as variáveis de ambiente.");
+      }
+
+      if (!tenantId) {
+        console.error("TenantDomainsClient: tenantId não fornecido");
+        throw new Error("ID do tenant não fornecido. Verifique se você está autenticado corretamente.");
+      }
+
+      const headers = this.addAuthHeaders(
+        {
+          "Content-Type": "application/json",
+        },
+        true,
+        tenantId
+      );
+
+      // Verificação adicional para garantir que o header x-tenant-id esteja presente
+      if (!headers["x-tenant-id"]) {
+        console.error("TenantDomainsClient: Header x-tenant-id não foi adicionado corretamente", headers);
+        throw new Error("Header x-tenant-id não foi adicionado. Verifique o ID do tenant.");
+      }
 
       const response = await fetch(`${this.API_URL}/tenant-domains/register`, {
         method: "POST",
-        headers: this.addAuthHeaders(
-          {
-            "Content-Type": "application/json",
-          },
-          true,
-          tenantId
-        ),
+        headers,
         body: JSON.stringify({ workspaceName, tenantId, forceDomainCreation }),
+      });
+
+      console.log("TenantDomainsClient: Resposta da API de registro", {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
+        const errorMessage = errorData.message || `Erro ${response.status}: ${response.statusText}`;
+        throw new Error(errorMessage);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log("TenantDomainsClient: Domínio registrado com sucesso:", result);
+      return result;
     } catch (error) {
       console.error("TenantDomainsClient: Erro ao registrar domínio:", error);
+
+      // Se o erro for relacionado à falta de headers, propagar o erro
+      if (
+        error instanceof Error &&
+        (error.message.includes("Header x-tenant-id") ||
+          error.message.includes("ID do tenant não fornecido") ||
+          error.message.includes("API_URL não está definida"))
+      ) {
+        throw error;
+      }
+
+      // Apenas resposta de fallback se não for erro crítico
       return {
-        url: await this.generateTenantUrl(workspaceName, tenantId),
+        url: "erro-de-registro.vercel.app", // URL inválida para indicar erro
         success: false,
         message: error instanceof Error ? error.message : "Erro desconhecido ao registrar domínio",
       };
@@ -193,17 +316,36 @@ export class TenantDomainsClient {
       console.log("TenantDomainsClient: Obtendo ou registrando domínio para", {
         workspaceName,
         tenantId,
+        API_URL: this.API_URL,
       });
+
+      if (!this.API_URL) {
+        console.error("TenantDomainsClient: API_URL não definida, usando URL padrão");
+        throw new Error("API_URL não está definida. Verifique as variáveis de ambiente.");
+      }
+
+      if (!tenantId) {
+        console.error("TenantDomainsClient: tenantId não fornecido");
+        throw new Error("ID do tenant não fornecido. Verifique se você está autenticado corretamente.");
+      }
+
+      const headers = this.addAuthHeaders(
+        {
+          "Content-Type": "application/json",
+        },
+        true,
+        tenantId
+      );
+
+      // Verificação adicional para garantir que o header x-tenant-id esteja presente
+      if (!headers["x-tenant-id"]) {
+        console.error("TenantDomainsClient: Header x-tenant-id não foi adicionado corretamente", headers);
+        throw new Error("Header x-tenant-id não foi adicionado. Verifique o ID do tenant.");
+      }
 
       const response = await fetch(`${this.API_URL}/tenant-domains/get-or-register`, {
         method: "POST",
-        headers: this.addAuthHeaders(
-          {
-            "Content-Type": "application/json",
-          },
-          true,
-          tenantId
-        ),
+        headers,
         body: JSON.stringify({
           workspaceName,
           tenantId,
@@ -211,15 +353,50 @@ export class TenantDomainsClient {
         }),
       });
 
+      console.log("TenantDomainsClient: Resposta da API", {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      });
+
       if (!response.ok) {
-        throw new Error(`Erro ao obter domínio: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Erro ${response.status}: ${response.statusText}`;
+        console.error("TenantDomainsClient: Resposta não OK:", errorMessage);
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+      console.log("TenantDomainsClient: Domínio obtido com sucesso:", data.url);
+
+      if (!data.url) {
+        throw new Error("A API retornou uma resposta sem URL.");
+      }
+
       return data.url;
     } catch (error) {
       console.error("TenantDomainsClient: Erro ao obter domínio:", error);
-      return this.generateTenantUrl(workspaceName, tenantId);
+
+      // Se o erro for relacionado à falta de headers, não tentar fallback
+      if (error instanceof Error && (error.message.includes("Header x-tenant-id") || error.message.includes("ID do tenant não fornecido"))) {
+        throw error;
+      }
+
+      // Tentar registrar diretamente se a primeira chamada falhar
+      try {
+        console.log("TenantDomainsClient: Tentando registrar domínio como fallback");
+        const registerResult = await this.registerTenantDomain(workspaceName, tenantId, true);
+        if (registerResult.success) {
+          console.log("TenantDomainsClient: Domínio registrado com sucesso como fallback:", registerResult.url);
+          return registerResult.url;
+        } else {
+          console.error("TenantDomainsClient: Registro de domínio falhou:", registerResult.message);
+          throw new Error(`Falha ao registrar domínio: ${registerResult.message}`);
+        }
+      } catch (registerError) {
+        console.error("TenantDomainsClient: Erro ao registrar domínio como fallback:", registerError);
+        throw new Error(registerError instanceof Error ? registerError.message : "Erro desconhecido ao registrar domínio");
+      }
     }
   }
 

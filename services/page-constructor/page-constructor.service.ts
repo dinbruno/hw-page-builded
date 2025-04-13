@@ -1,4 +1,4 @@
-import { mockPages } from "../mock";
+import { getHeaders } from "../../utils/getHeaders";
 
 export interface Page {
   id: string;
@@ -10,7 +10,7 @@ export interface Page {
 export class PageService {
   private static cache: Record<string, { data: any; timestamp: number }> = {};
   private static CACHE_DURATION = 5 * 1000;
-  private static IS_DEVELOPMENT = process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_NODE_ENV === "development";
+  private static API_URL = process.env.NEXT_PUBLIC_API_CORE_URL_PROD || "http://localhost:4000";
 
   static async getById(pageId: string, workspaceId?: string): Promise<Page> {
     const cacheKey = `id:${pageId}`;
@@ -20,23 +20,27 @@ export class PageService {
     }
 
     try {
-      if (this.IS_DEVELOPMENT) {
-        const page = mockPages.find((p) => p.id === pageId);
-        if (!page) throw new Error(`Page with ID ${pageId} not found`);
+      console.log("PageService: Buscando página por ID", { pageId, workspaceId });
 
-        this.cache[cacheKey] = {
-          data: page,
-          timestamp: Date.now(),
-        };
+      // Usar getHeaders para incluir token e tenant ID
+      const headers = getHeaders();
+      console.log("PageService: Headers para a requisição", headers);
 
-        return page;
-      }
+      const apiUrl = `${this.API_URL}/pages/${pageId}`;
+      const response = await fetch(apiUrl, {
+        headers,
+      });
 
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/pages/${pageId}`;
-      const response = await fetch(apiUrl);
+      console.log("PageService: Resposta da API", {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch page: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Erro ${response.status}: ${response.statusText}`;
+        throw new Error(`Failed to fetch page: ${errorMessage}`);
       }
 
       const data = await response.json();
@@ -49,13 +53,6 @@ export class PageService {
       return data;
     } catch (error) {
       console.error("Error fetching page by ID:", error);
-
-      if (!this.IS_DEVELOPMENT) {
-        console.log("Falling back to mock data");
-        const page = mockPages.find((p) => p.id === pageId);
-        if (page) return page;
-      }
-
       throw error;
     }
   }
@@ -68,27 +65,31 @@ export class PageService {
     }
 
     try {
-      if (this.IS_DEVELOPMENT) {
-        const page = mockPages.find((p) => p.slug === slug && (!workspaceId || p.workspaceId === workspaceId));
-        if (!page) throw new Error(`Page with slug "${slug}" not found`);
+      console.log("PageService: Buscando página por slug", { slug, workspaceId });
 
-        this.cache[cacheKey] = {
-          data: page,
-          timestamp: Date.now(),
-        };
+      // Usar getHeaders para incluir token e tenant ID
+      const headers = getHeaders();
+      console.log("PageService: Headers para a requisição", headers);
 
-        return page;
-      }
-
-      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/pages/by-slug/${slug}`);
+      const url = new URL(`${this.API_URL}/pages/by-slug/${slug}`);
       if (workspaceId) {
         url.searchParams.append("workspaceId", workspaceId);
       }
 
-      const response = await fetch(url.toString());
+      const response = await fetch(url.toString(), {
+        headers,
+      });
+
+      console.log("PageService: Resposta da API", {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch page: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Erro ${response.status}: ${response.statusText}`;
+        throw new Error(`Failed to fetch page: ${errorMessage}`);
       }
 
       const data = await response.json();
@@ -101,13 +102,6 @@ export class PageService {
       return data;
     } catch (error) {
       console.error("Error fetching page by slug:", error);
-
-      if (!this.IS_DEVELOPMENT) {
-        console.log("Falling back to mock data");
-        const page = mockPages.find((p) => p.slug === slug && (!workspaceId || p.workspaceId === workspaceId));
-        if (page) return page;
-      }
-
       throw error;
     }
   }
@@ -120,26 +114,31 @@ export class PageService {
     }
 
     try {
-      if (this.IS_DEVELOPMENT) {
-        const pages = workspaceId ? mockPages.filter((p) => p.workspaceId === workspaceId) : mockPages;
+      console.log("PageService: Buscando todas as páginas", { workspaceId });
 
-        this.cache[cacheKey] = {
-          data: pages,
-          timestamp: Date.now(),
-        };
+      // Usar getHeaders para incluir token e tenant ID
+      const headers = getHeaders();
+      console.log("PageService: Headers para a requisição", headers);
 
-        return pages;
-      }
-
-      const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/pages`);
+      const url = new URL(`${this.API_URL}/pages`);
       if (workspaceId) {
         url.searchParams.append("workspaceId", workspaceId);
       }
 
-      const response = await fetch(url.toString());
+      const response = await fetch(url.toString(), {
+        headers,
+      });
+
+      console.log("PageService: Resposta da API", {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+      });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch pages: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Erro ${response.status}: ${response.statusText}`;
+        throw new Error(`Failed to fetch pages: ${errorMessage}`);
       }
 
       const data = await response.json();
@@ -152,13 +151,6 @@ export class PageService {
       return data;
     } catch (error) {
       console.error("Error fetching all pages:", error);
-
-      if (!this.IS_DEVELOPMENT) {
-        console.log("Falling back to mock data");
-        const pages = workspaceId ? mockPages.filter((p) => p.workspaceId === workspaceId) : mockPages;
-        return pages;
-      }
-
       throw error;
     }
   }
