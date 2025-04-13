@@ -38,6 +38,15 @@ export default async function RootHandler() {
 
     if (workspaces && workspaces.length > 0) {
       const workspace = workspaces[0];
+      console.log("Obtendo páginas para workspace:", workspace.id);
+
+      // Obter todas as páginas do workspace independente do ambiente
+      const pages = await PageService.getAll(workspace.id);
+      console.log("Páginas obtidas:", pages?.length || 0);
+
+      // Encontrar a página inicial do workspace
+      const homePage = pages.find((page: any) => page.name === "Página Inicial");
+      console.log("Página inicial encontrada:", homePage?.slug || "não encontrada");
 
       // Verificar se estamos em ambiente de produção
       const isProduction = process.env.NODE_ENV === "production";
@@ -48,35 +57,29 @@ export default async function RootHandler() {
         console.log("Ambiente de produção, verificando/criando domínio para tenant...");
 
         // Verificar se já existe um domínio para este tenant ou criar um novo
-        const domainResult = await TenantDomainsClient.getOrRegisterTenantDomain(workspace.name || workspace.slug, tenantId);
+        const domainUrl = await TenantDomainsClient.getOrRegisterTenantDomain(
+          workspace.name || workspace.slug,
+          tenantId,
+          true // Forçar criação do domínio se necessário
+        );
 
-        console.log("Domínio obtido:", domainResult);
-
-        // Obter páginas do workspace para encontrar a página inicial
-        const pages = await PageService.getAll(workspace.id);
-        const homePage = pages.find((page: any) => page.name === "Página Inicial");
+        console.log("Domínio obtido:", domainUrl);
 
         if (homePage) {
           // Redirecionar para a página inicial no domínio do tenant
-          const fullUrl = `${domainResult}/${homePage.slug}?workspaceId=${workspace.id}`;
+          const fullUrl = `${domainUrl}/${homePage.slug}?workspaceId=${workspace.id}`;
           console.log("Redirecionando para página inicial no domínio do tenant:", fullUrl);
           return redirect(fullUrl);
         } else {
-          // Sem página inicial, redirecionar para o domínio do tenant
-          console.log("Redirecionando para o domínio do tenant:", domainResult);
-          return redirect(domainResult);
+          // Caso não tenha encontrado a página inicial, redirecionar para o fallback no subdomínio do tenant
+          const fallbackUrl = `${domainUrl}/workspace/${workspace.slug}`;
+          console.log("Página inicial não encontrada. Redirecionando para workspace no domínio do tenant:", fallbackUrl);
+          return redirect(fallbackUrl);
         }
       }
 
       // Em ambiente de desenvolvimento, continuar com o fluxo normal
       console.log("Ambiente de desenvolvimento, continuando fluxo normal");
-      console.log("Obtendo páginas para workspace:", workspace.id);
-
-      const pages = await PageService.getAll(workspace.id);
-      console.log("Páginas obtidas:", pages?.length || 0);
-
-      const homePage = pages.find((page: any) => page.name === "Página Inicial");
-      console.log("Página inicial encontrada:", homePage?.slug || "não encontrada");
 
       if (homePage) {
         // Redirect to the home page with workspaceId

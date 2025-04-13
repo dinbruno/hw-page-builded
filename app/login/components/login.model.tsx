@@ -82,6 +82,7 @@ export function useLoginPage() {
       const maxAttempts = 3;
       let domainReady = false;
       let lastDomainResult: { success: boolean; url: string; message?: string } | null = null;
+      let domainUrl: string | null = null;
 
       while (attempts < maxAttempts && !domainReady) {
         attempts++;
@@ -89,13 +90,19 @@ export function useLoginPage() {
 
         try {
           // Usar o novo cliente para obter ou registrar o domínio
-          const domainUrl = await TenantDomainsClient.getOrRegisterTenantDomain(
+          domainUrl = await TenantDomainsClient.getOrRegisterTenantDomain(
             workspace.name || workspace.slug,
             tenantId,
             true // Forçar criação do domínio
           );
 
           console.log("Domínio verificado com sucesso via API de domínios:", domainUrl);
+
+          // Armazenar o domínio verificado para uso no redirecionamento
+          if (typeof localStorage !== "undefined" && domainUrl) {
+            localStorage.setItem("verifiedDomain", domainUrl);
+            localStorage.setItem("verifiedDomainTimestamp", Date.now().toString());
+          }
 
           domainReady = true;
           lastDomainResult = {
@@ -113,6 +120,23 @@ export function useLoginPage() {
       // Mesmo se não conseguirmos verificar o domínio, podemos continuar após exibir alerta
       if (domainReady) {
         setDomainStatus("ready");
+
+        // Obter páginas do workspace para permitir redirecionamento direto
+        try {
+          const pages = await PageService.getAll(workspace.id);
+          const homePage = pages.find((page: any) => page.name === "Página Inicial");
+
+          if (homePage && domainUrl) {
+            // Armazenar informação da página inicial para usar no redirecionamento
+            if (typeof localStorage !== "undefined") {
+              localStorage.setItem("homePageSlug", homePage.slug);
+              localStorage.setItem("workspaceId", workspace.id);
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao obter páginas para pré-redirecionamento:", error);
+        }
+
         return true;
       } else {
         console.log("Falha na verificação do domínio, mas continuando com redirecionamento");
@@ -201,7 +225,24 @@ export function useLoginPage() {
       const domainReady = await verifyDomainAvailability(tenantId);
 
       if (domainReady) {
-        // Simply redirect to root route which will handle the proper redirection
+        // Tentar redirecionar usando o domínio verificado
+        const verifiedDomain = typeof localStorage !== "undefined" ? localStorage.getItem("verifiedDomain") : null;
+        const homePageSlug = typeof localStorage !== "undefined" ? localStorage.getItem("homePageSlug") : null;
+        const workspaceId = typeof localStorage !== "undefined" ? localStorage.getItem("workspaceId") : null;
+
+        if (verifiedDomain && homePageSlug && workspaceId) {
+          // Temos todas as informações necessárias para um redirecionamento direto
+          const fullUrl = `${verifiedDomain}/${homePageSlug}?workspaceId=${workspaceId}`;
+          console.log("Redirecionando diretamente para:", fullUrl);
+
+          // Usar window.location para redirecionamento entre domínios
+          window.location.href = fullUrl;
+          return;
+        }
+
+        // Se não temos todas as informações, redirecionar para a rota raiz
+        // que fará o redirecionamento adequado via middleware
+        console.log("Redirecionando para rota raiz para processamento de redirecionamento");
         router.push("/");
       } else {
         toast({
