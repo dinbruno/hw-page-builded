@@ -4,6 +4,17 @@ import { PageService } from "@/services/page-constructor/page-constructor.servic
 import { WorkspaceService } from "@/services/workspaces/workspaces.service";
 import dynamic from "next/dynamic";
 import { setWorkspaceIdCookie } from "./actions/cookie-actions";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Página Inicial",
+  description: "Bem-vindo ao seu workspace. Gerencie suas páginas e conteúdo aqui.",
+  openGraph: {
+    title: "Página Inicial",
+    description: "Bem-vindo ao seu workspace. Gerencie suas páginas e conteúdo aqui.",
+    type: "website",
+  },
+};
 
 // Dynamic import with no SSR to prevent hydration issues
 const DynamicPageRenderer = dynamic(() => import("@/components/static-renderer/page-renderer").then((mod) => ({ default: mod.PageRenderer })), {
