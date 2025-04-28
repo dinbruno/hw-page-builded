@@ -2,11 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-
-
 @layer base {
   :root {
-
     --background: 0 0% 100%;
 
     --foreground: 0 0% 3.9%;
@@ -55,10 +52,9 @@
 
     --chart-5: 27 87% 67%;
 
-    --radius: 0.5rem
+    --radius: 0.5rem;
   }
   .dark {
-
     --background: 0 0% 3.9%;
 
     --foreground: 0 0% 98%;
@@ -105,11 +101,9 @@
 
     --chart-4: 280 65% 60%;
 
-    --chart-5: 340 75% 55%
+    --chart-5: 340 75% 55%;
   }
 }
-
-
 
 @layer base {
   * {
@@ -117,5 +111,90 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Estilos para os componentes de layout responsivo na visualização estática */
+.static-layout {
+  position: relative;
+  width: 100%;
+}
+
+.static-columns-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.column-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100px;
+  position: relative;
+}
+
+.static-column-placeholder {
+  min-height: 100px;
+}
+
+/* Ajustes responsivos para os layouts em telas pequenas */
+@media (max-width: 768px) {
+  .static-columns-container {
+    flex-direction: column;
+  }
+
+  .column-wrapper,
+  .static-column-placeholder {
+    width: 100% !important;
+    margin-bottom: 16px;
+  }
+}
+
+/* Ajustes específicos para o sistema de layout do craftjs */
+[data-cy="craftjs-renderer"] .column-wrapper > * {
+  width: 100%;
+  height: 100%;
+}
+
+.static-page-container {
+  width: 100%;
+}
+
+/* Assegura que componentes dentro das colunas ocupem o espaço disponível */
+.column-wrapper > div {
+  width: 100%;
+}
+
+/* Estilos para os componentes de layout responsivo na visualização estática */
+.static-layout {
+  position: relative;
+  width: 100%;
+}
+
+.static-columns-container {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.column-wrapper {
+  display: flex;
+  min-height: 100px;
+}
+
+.static-column-placeholder {
+  min-height: 100px;
+}
+
+/* Ajustes para responsividade em telas pequenas */
+@media (max-width: 768px) {
+  .static-columns-container {
+    flex-direction: column;
+  }
+
+  .column-wrapper,
+  .static-column-placeholder {
+    width: 100% !important;
+    margin-bottom: 16px;
   }
 }
