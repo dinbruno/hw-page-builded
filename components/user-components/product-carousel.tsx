@@ -12,9 +12,9 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Label } from "@/components/ui/label";
 import Input from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ColorPicker } from "../editor/color-picker";
 import { Switch } from "@/components/ui/switch";
 import { PropertyField } from "../editor/property-field";
+import { ColorPicker } from "../editor/color-picker";
 
 interface Product {
   id: string;

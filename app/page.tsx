@@ -63,8 +63,6 @@ export default async function Home() {
     // Obter dados completos da página
     const pageData = await PageService.getById(homePage.id, currentWorkspaceId, authToken, tenantId);
 
-    console.log("pageData", pageData);
-
     if (!pageData) {
       return notFound();
     }
@@ -78,7 +76,7 @@ export default async function Home() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Erro ao carregar a páginaaaaaaaaa</h1>
+          <h1 className="text-2xl font-bold mb-4">Erro ao carregar a página</h1>
           <p>Houve um problema ao carregar a página inicial. Por favor, tente novamente mais tarde.</p>
         </div>
       </div>
