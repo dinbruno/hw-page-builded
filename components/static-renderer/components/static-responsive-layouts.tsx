@@ -3,7 +3,6 @@
 import { motion } from "framer-motion";
 import React from "react";
 
-// Interface comum para todos os layouts responsivos
 interface ResponsiveLayoutProps {
   backgroundColor?: string;
   padding?: number;
@@ -13,13 +12,12 @@ interface ResponsiveLayoutProps {
   className?: string;
   children?: React.ReactNode;
   id?: string;
-  // Props para compatibilidade com o sistema de renderização
   displayName?: string;
   nodes?: string[];
+  linkedNodes?: Record<string, string>;
   [key: string]: any;
 }
 
-// Static version of TwoEqualColumns
 export function StaticTwoEqualColumns({
   backgroundColor = "transparent",
   padding = 16,
@@ -29,8 +27,133 @@ export function StaticTwoEqualColumns({
   className = "",
   children,
   id,
+  nodes,
+  linkedNodes,
+  ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
+
+  console.log("[StaticTwoEqualColumns] Props recebidas:", {
+    id,
+    nodes,
+    linkedNodes,
+    restKeys: Object.keys(rest),
+  });
+
+  const knownColumn0Keys = ["zHwxTGo5Hz"];
+  const knownColumn1Keys = ["n-kf5m4soS", "n_kf5m4soS"];
+
+  const column0Content = knownColumn0Keys.map((key) => rest[key]).find(Boolean);
+  const column1Content = knownColumn1Keys.map((key) => rest[key]).find(Boolean);
+
+  console.log("[StaticTwoEqualColumns] Conteúdo encontrado:", {
+    column0: column0Content ? "Presente" : "Ausente",
+    column1: column1Content ? "Presente" : "Ausente",
+  });
+
+  if (column0Content || column1Content) {
+    console.log("[StaticTwoEqualColumns] Renderizando conteúdo encontrado");
+    return (
+      <motion.div
+        className={`static-layout static-two-columns w-full ${className || ""}`}
+        animate={{ opacity: 1 }}
+        initial={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          backgroundColor,
+          padding: `${padding}px`,
+          width: fullWidth ? "100%" : "auto",
+        }}
+        id={id}
+      >
+        <div
+          className="flex w-full flex-wrap static-columns-container"
+          style={{
+            gap: `${gap}px`,
+          }}
+        >
+          <div className="static-column w-[calc(50%-8px)]">
+            {column0Content || (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 1 (Vazia)</p>
+              </div>
+            )}
+          </div>
+          <div className="static-column w-[calc(50%-8px)]">
+            {column1Content || (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 2 (Vazia)</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  const renderLinkedNodes = () => {
+    console.log("[StaticTwoEqualColumns] Tentando renderizar linkedNodes", { linkedNodes, nodes });
+
+    if (linkedNodes && nodes && nodes.length > 0) {
+      const nodeKey = nodes[0];
+
+      const column0Key = `${nodeKey}-column-0`;
+      const column1Key = `${nodeKey}-column-1`;
+
+      const column0LinkedNode = linkedNodes[column0Key];
+      const column1LinkedNode = linkedNodes[column1Key];
+
+      console.log("[StaticTwoEqualColumns] Chaves das colunas:", {
+        nodeKey,
+        column0Key,
+        column1Key,
+        column0LinkedNode,
+        column1LinkedNode,
+        hasColumn0Content: column0LinkedNode && rest[column0LinkedNode],
+        hasColumn1Content: column1LinkedNode && rest[column1LinkedNode],
+      });
+
+      return (
+        <>
+          <div className="static-column w-[calc(50%-8px)]">
+            {column0LinkedNode && rest[column0LinkedNode] ? (
+              rest[column0LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 1 (Vazia)</p>
+              </div>
+            )}
+          </div>
+          <div className="static-column w-[calc(50%-8px)]">
+            {column1LinkedNode && rest[column1LinkedNode] ? (
+              rest[column1LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 2 (Vazia)</p>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    return React.Children.count(children) > 0 ? (
+      children
+    ) : (
+      <>
+        <div className="static-column-placeholder w-[calc(50%-8px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 1</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(50%-8px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 2</p>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   return (
     <motion.div
@@ -51,28 +174,12 @@ export function StaticTwoEqualColumns({
           gap: `${gap}px`,
         }}
       >
-        {React.Children.count(children) > 0 ? (
-          children
-        ) : (
-          <>
-            <div className="static-column-placeholder w-[calc(50%-8px)]">
-              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna 1</p>
-              </div>
-            </div>
-            <div className="static-column-placeholder w-[calc(50%-8px)]">
-              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna 2</p>
-              </div>
-            </div>
-          </>
-        )}
+        {renderLinkedNodes()}
       </div>
     </motion.div>
   );
 }
 
-// Static version of ThreeEqualColumns
 export function StaticThreeEqualColumns({
   backgroundColor = "transparent",
   padding = 16,
@@ -82,8 +189,81 @@ export function StaticThreeEqualColumns({
   className = "",
   children,
   id,
+  nodes,
+  linkedNodes,
+  ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
+
+  const renderLinkedNodes = () => {
+    if (linkedNodes && nodes && nodes.length > 0) {
+      const nodeKey = nodes[0];
+
+      const column0Key = `${nodeKey}-column-0`;
+      const column1Key = `${nodeKey}-column-1`;
+      const column2Key = `${nodeKey}-column-2`;
+
+      const column0LinkedNode = linkedNodes[column0Key];
+      const column1LinkedNode = linkedNodes[column1Key];
+      const column2LinkedNode = linkedNodes[column2Key];
+
+      console.log("Three Columns Linked Nodes:", linkedNodes);
+
+      return (
+        <>
+          <div className="static-column w-[calc(33.33%-11px)]">
+            {column0LinkedNode && rest[column0LinkedNode] ? (
+              rest[column0LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 1 (Vazia)</p>
+              </div>
+            )}
+          </div>
+          <div className="static-column w-[calc(33.33%-11px)]">
+            {column1LinkedNode && rest[column1LinkedNode] ? (
+              rest[column1LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 2 (Vazia)</p>
+              </div>
+            )}
+          </div>
+          <div className="static-column w-[calc(33.33%-11px)]">
+            {column2LinkedNode && rest[column2LinkedNode] ? (
+              rest[column2LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 3 (Vazia)</p>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    return React.Children.count(children) > 0 ? (
+      children
+    ) : (
+      <>
+        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 1</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 2</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 3</p>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   return (
     <motion.div
@@ -104,27 +284,7 @@ export function StaticThreeEqualColumns({
           gap: `${gap}px`,
         }}
       >
-        {React.Children.count(children) > 0 ? (
-          children
-        ) : (
-          <>
-            <div className="static-column-placeholder w-[calc(33.33%-11px)]">
-              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna 1</p>
-              </div>
-            </div>
-            <div className="static-column-placeholder w-[calc(33.33%-11px)]">
-              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna 2</p>
-              </div>
-            </div>
-            <div className="static-column-placeholder w-[calc(33.33%-11px)]">
-              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna 3</p>
-              </div>
-            </div>
-          </>
-        )}
+        {renderLinkedNodes()}
       </div>
     </motion.div>
   );
@@ -140,8 +300,65 @@ export function StaticSidebarMainLayout({
   className = "",
   children,
   id,
+  nodes,
+  linkedNodes,
+  ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
+
+  const renderLinkedNodes = () => {
+    if (linkedNodes && nodes && nodes.length > 0) {
+      const nodeKey = nodes[0];
+
+      const column0Key = `${nodeKey}-column-0`;
+      const column1Key = `${nodeKey}-column-1`;
+
+      const column0LinkedNode = linkedNodes[column0Key];
+      const column1LinkedNode = linkedNodes[column1Key];
+
+      console.log("Sidebar Linked Nodes:", linkedNodes);
+
+      return (
+        <>
+          <div className="static-column w-[calc(33.33%-11px)]">
+            {column0LinkedNode && rest[column0LinkedNode] ? (
+              rest[column0LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Sidebar (Vazia)</p>
+              </div>
+            )}
+          </div>
+          <div className="static-column w-[calc(66.67%-5px)]">
+            {column1LinkedNode && rest[column1LinkedNode] ? (
+              rest[column1LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Conteúdo Principal (Vazio)</p>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    return React.Children.count(children) > 0 ? (
+      children
+    ) : (
+      <>
+        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Sidebar</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(66.67%-5px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Conteúdo Principal</p>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   return (
     <motion.div
@@ -162,22 +379,7 @@ export function StaticSidebarMainLayout({
           gap: `${gap}px`,
         }}
       >
-        {React.Children.count(children) > 0 ? (
-          children
-        ) : (
-          <>
-            <div className="static-column-placeholder w-[calc(33.33%-11px)]">
-              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Sidebar</p>
-              </div>
-            </div>
-            <div className="static-column-placeholder w-[calc(66.67%-5px)]">
-              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Conteúdo Principal</p>
-              </div>
-            </div>
-          </>
-        )}
+        {renderLinkedNodes()}
       </div>
     </motion.div>
   );
@@ -193,8 +395,81 @@ export function StaticThreeColumnsWideCenter({
   className = "",
   children,
   id,
+  nodes,
+  linkedNodes,
+  ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
+
+  const renderLinkedNodes = () => {
+    if (linkedNodes && nodes && nodes.length > 0) {
+      const nodeKey = nodes[0];
+
+      const column0Key = `${nodeKey}-column-0`;
+      const column1Key = `${nodeKey}-column-1`;
+      const column2Key = `${nodeKey}-column-2`;
+
+      const column0LinkedNode = linkedNodes[column0Key];
+      const column1LinkedNode = linkedNodes[column1Key];
+      const column2LinkedNode = linkedNodes[column2Key];
+
+      console.log("Wide Center Linked Nodes:", linkedNodes);
+
+      return (
+        <>
+          <div className="static-column w-[calc(25%-12px)]">
+            {column0LinkedNode && rest[column0LinkedNode] ? (
+              rest[column0LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 1 (Vazia)</p>
+              </div>
+            )}
+          </div>
+          <div className="static-column w-[calc(50%-8px)]">
+            {column1LinkedNode && rest[column1LinkedNode] ? (
+              rest[column1LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna Central (Vazia)</p>
+              </div>
+            )}
+          </div>
+          <div className="static-column w-[calc(25%-12px)]">
+            {column2LinkedNode && rest[column2LinkedNode] ? (
+              rest[column2LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 3 (Vazia)</p>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    return React.Children.count(children) > 0 ? (
+      children
+    ) : (
+      <>
+        <div className="static-column-placeholder w-[calc(25%-12px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 1</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(50%-8px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna Central</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(25%-12px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 3</p>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   return (
     <motion.div
@@ -215,27 +490,134 @@ export function StaticThreeColumnsWideCenter({
           gap: `${gap}px`,
         }}
       >
-        {React.Children.count(children) > 0 ? (
-          children
-        ) : (
-          <>
-            <div className="static-column-placeholder w-[calc(25%-12px)]">
+        {renderLinkedNodes()}
+      </div>
+    </motion.div>
+  );
+}
+
+// Static version of FourEqualColumns
+export function StaticFourEqualColumns({
+  backgroundColor = "transparent",
+  padding = 16,
+  gap = 16,
+  fullWidth = true,
+  hidden = false,
+  className = "",
+  children,
+  id,
+  nodes,
+  linkedNodes,
+  ...rest
+}: ResponsiveLayoutProps) {
+  if (hidden) return null;
+
+  const renderLinkedNodes = () => {
+    if (linkedNodes && nodes && nodes.length > 0) {
+      const nodeKey = nodes[0];
+
+      const column0Key = `${nodeKey}-column-0`;
+      const column1Key = `${nodeKey}-column-1`;
+      const column2Key = `${nodeKey}-column-2`;
+      const column3Key = `${nodeKey}-column-3`;
+
+      const column0LinkedNode = linkedNodes[column0Key];
+      const column1LinkedNode = linkedNodes[column1Key];
+      const column2LinkedNode = linkedNodes[column2Key];
+      const column3LinkedNode = linkedNodes[column3Key];
+
+      console.log("Four Columns Linked Nodes:", linkedNodes);
+
+      return (
+        <>
+          <div className="static-column w-[calc(25%-12px)]">
+            {column0LinkedNode && rest[column0LinkedNode] ? (
+              rest[column0LinkedNode]
+            ) : (
               <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna 1</p>
+                <p className="text-sm text-gray-500">Coluna 1 (Vazia)</p>
               </div>
-            </div>
-            <div className="static-column-placeholder w-[calc(50%-8px)]">
+            )}
+          </div>
+          <div className="static-column w-[calc(25%-12px)]">
+            {column1LinkedNode && rest[column1LinkedNode] ? (
+              rest[column1LinkedNode]
+            ) : (
               <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna Central</p>
+                <p className="text-sm text-gray-500">Coluna 2 (Vazia)</p>
               </div>
-            </div>
-            <div className="static-column-placeholder w-[calc(25%-12px)]">
+            )}
+          </div>
+          <div className="static-column w-[calc(25%-12px)]">
+            {column2LinkedNode && rest[column2LinkedNode] ? (
+              rest[column2LinkedNode]
+            ) : (
               <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
-                <p className="text-sm text-gray-500">Coluna 3</p>
+                <p className="text-sm text-gray-500">Coluna 3 (Vazia)</p>
               </div>
-            </div>
-          </>
-        )}
+            )}
+          </div>
+          <div className="static-column w-[calc(25%-12px)]">
+            {column3LinkedNode && rest[column3LinkedNode] ? (
+              rest[column3LinkedNode]
+            ) : (
+              <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+                <p className="text-sm text-gray-500">Coluna 4 (Vazia)</p>
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    return React.Children.count(children) > 0 ? (
+      children
+    ) : (
+      <>
+        <div className="static-column-placeholder w-[calc(25%-12px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 1</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(25%-12px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 2</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(25%-12px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 3</p>
+          </div>
+        </div>
+        <div className="static-column-placeholder w-[calc(25%-12px)]">
+          <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
+            <p className="text-sm text-gray-500">Coluna 4</p>
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  return (
+    <motion.div
+      className={`static-layout static-four-columns w-full ${className || ""}`}
+      animate={{ opacity: 1 }}
+      initial={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      style={{
+        backgroundColor,
+        padding: `${padding}px`,
+        width: fullWidth ? "100%" : "auto",
+      }}
+      id={id}
+    >
+      <div
+        className="flex w-full flex-wrap static-columns-container"
+        style={{
+          gap: `${gap}px`,
+        }}
+      >
+        {renderLinkedNodes()}
       </div>
     </motion.div>
   );

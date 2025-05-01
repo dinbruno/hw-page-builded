@@ -7,7 +7,6 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, AlertCircle, Info } from "lucide-react";
 
-// Shadcn UI Components
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,30 +39,25 @@ export function LoginView(props: any) {
 
   const [rememberMe, setRememberMe] = useState(false);
 
-  // Custom styles based on the workspace theme
   const buttonStyle = workspaceInfo.theme
     ? {
         backgroundColor: workspaceInfo.theme.color_primary_hex,
-        color: "#FFFFFF", // Contrasting text color
+        color: "#FFFFFF",
         "&:hover": {
-          backgroundColor: adjustColor(workspaceInfo.theme.color_primary_hex, -20), // Darken for hover
+          backgroundColor: adjustColor(workspaceInfo.theme.color_primary_hex, -20),
         },
       }
     : {};
 
-  // Helper function to adjust color brightness
   function adjustColor(hex: string, percent: number) {
-    // Convert hex to RGB
     let r = Number.parseInt(hex.slice(1, 3), 16);
     let g = Number.parseInt(hex.slice(3, 5), 16);
     let b = Number.parseInt(hex.slice(5, 7), 16);
 
-    // Adjust brightness
     r = Math.max(0, Math.min(255, r + percent));
     g = Math.max(0, Math.min(255, g + percent));
     b = Math.max(0, Math.min(255, b + percent));
 
-    // Convert back to hex
     return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
   }
 
@@ -88,7 +82,6 @@ export function LoginView(props: any) {
               transition={{ duration: 0.3 }}
               className="relative"
             >
-              {/* Logo */}
               <motion.div
                 className="mb-10 flex justify-center"
                 initial={{ y: -10, opacity: 0 }}
@@ -108,7 +101,6 @@ export function LoginView(props: any) {
                 )}
               </motion.div>
 
-              {/* Spinner com efeito de glow */}
               <div className="relative flex justify-center mb-8">
                 <motion.div
                   animate={{
@@ -123,7 +115,6 @@ export function LoginView(props: any) {
                   <Loader2 className="h-10 w-10" style={{ color: workspaceInfo.theme?.color_primary_hex || "hsl(221.2 83.2% 53.3%)" }} />
                 </motion.div>
 
-                {/* Efeito de glow */}
                 <motion.div
                   className="absolute inset-0 rounded-full blur-xl -z-10"
                   style={{ backgroundColor: workspaceInfo.theme?.color_primary_hex || "hsl(221.2 83.2% 53.3%)" }}
@@ -132,7 +123,6 @@ export function LoginView(props: any) {
                 />
               </div>
 
-              {/* Barra de progresso */}
               <motion.div
                 className="w-48 h-[2px] bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-6 mx-auto"
                 initial={{ opacity: 0, y: 10 }}
@@ -155,7 +145,6 @@ export function LoginView(props: any) {
                 />
               </motion.div>
 
-              {/* Texto minimalista */}
               <motion.p
                 className="text-center text-sm font-medium"
                 initial={{ opacity: 0 }}

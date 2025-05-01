@@ -90,8 +90,8 @@ export function useLoginPage() {
       try {
         setIsInitialLoading(true);
 
-        const hostname = window.location.hostname;
-        // const hostname = "workspace-3kxlqajt.vercel.app";
+        // const hostname = window.location.hostname;
+        const hostname = "workspace-7k9pknxm.vercel.app";
 
         const workspace = await WorkspaceService.getWorkspaceByUrl(hostname);
 
