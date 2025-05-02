@@ -289,6 +289,13 @@ export default function StaticTable({
     } else {
       containerStyle.borderRadius = `${borderRadius}px`;
     }
+  } else if (border && border.radius) {
+    // Apply just the border radius even if width is 0
+    containerStyle.borderTopLeftRadius = `${border.radius.topLeft}px`;
+    containerStyle.borderTopRightRadius = `${border.radius.topRight}px`;
+    containerStyle.borderBottomLeftRadius = `${border.radius.bottomLeft}px`;
+    containerStyle.borderBottomRightRadius = `${border.radius.bottomRight}px`;
+    containerStyle.border = `0px solid transparent`; // Ensure border is set to handle radius
   } else {
     containerStyle.borderRadius = `${borderRadius}px`;
     containerStyle.border = `${borderWidth}px solid ${borderColor}`;

@@ -119,6 +119,12 @@ export default function StaticHeader({
       containerStyle.borderBottomLeftRadius = `${border.radius.bottomLeft}px`;
       containerStyle.borderBottomRightRadius = `${border.radius.bottomRight}px`;
     }
+  } else if (border && border.radius) {
+    // Apply just the border radius even if width is 0
+    containerStyle.borderTopLeftRadius = `${border.radius.topLeft}px`;
+    containerStyle.borderTopRightRadius = `${border.radius.topRight}px`;
+    containerStyle.borderBottomLeftRadius = `${border.radius.bottomLeft}px`;
+    containerStyle.borderBottomRightRadius = `${border.radius.bottomRight}px`;
   }
 
   // Container width styles

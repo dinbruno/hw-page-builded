@@ -18,6 +18,9 @@ const StaticDocumentsList = dynamic(() => import("./components/static-documents-
 const StaticHeader = dynamic(() => import("./components/static-header"));
 const StaticKanbanBoard = dynamic(() => import("./components/static-kanban-board"));
 const StaticTable = dynamic(() => import("./components/static-table"));
+const StaticProductCarousel = dynamic(() => import("./components/static-product-carousel"));
+const StaticProductCard = dynamic(() => import("./components/static-product-card"));
+const StaticHeroCarousel = dynamic(() => import("./components/static-hero-carousel"));
 
 import {
   StaticTwoEqualColumns,
@@ -45,6 +48,9 @@ const componentMap: Record<string, any> = {
   Header: StaticHeader,
   KanbanBoard: StaticKanbanBoard,
   DynamicTable: StaticTable,
+  ProductCarousel: StaticProductCarousel,
+  ProductCard: StaticProductCard,
+  HeroSection: StaticHeroCarousel,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {

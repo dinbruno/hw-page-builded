@@ -1,37 +1,101 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "../../ui/button";
+import Image from "next/image";
 
-interface BannerSlide {
+interface HeroImageProps {
+  url: string;
+  size: "cover" | "contain" | "auto" | "custom";
+  position: "center" | "top" | "bottom" | "left" | "right" | "custom";
+  repeat: "no-repeat" | "repeat" | "repeat-x" | "repeat-y";
+  customSize?: string;
+  customPosition?: string;
+}
+
+interface GradientColor {
+  color: string;
+  position: number;
+}
+
+interface GradientProps {
+  type: "linear" | "radial";
+  angle: number;
+  colors: GradientColor[];
+}
+
+interface OverlayProps {
+  enabled: boolean;
+  color: string;
+  opacity: number;
+}
+
+interface BackgroundValue {
+  type: "color" | "image" | "gradient";
+  color: string;
+  image: HeroImageProps;
+  gradient: GradientProps;
+  overlay: OverlayProps;
+}
+
+interface AnimationValue {
+  type: "none" | "fade" | "slide" | "zoom" | "flip" | "bounce";
+  duration: number;
+  delay: number;
+  easing: "ease" | "ease-in" | "ease-out" | "ease-in-out" | "linear";
+  repeat: number;
+}
+
+interface BorderProps {
+  width: number;
+  style: "solid" | "dashed" | "dotted" | "none";
+  color: string;
+  radius: {
+    topLeft: number;
+    topRight: number;
+    bottomRight: number;
+    bottomLeft: number;
+  };
+}
+
+interface HeroSlide {
   id: string;
   title: string;
   subtitle: string;
-  buttonText: string;
-  buttonUrl: string;
+  primaryButtonText: string;
+  primaryButtonUrl: string;
+  secondaryButtonText: string;
+  secondaryButtonUrl: string;
   backgroundImage: string;
   customContent?: string;
 }
 
-interface BannerProps {
+interface HeroSectionProps {
   title?: string;
   subtitle?: string;
-  buttonText?: string;
-  buttonUrl?: string;
+  primaryButtonText?: string;
+  primaryButtonUrl?: string;
+  secondaryButtonText?: string;
+  secondaryButtonUrl?: string;
+  showPrimaryButton?: boolean;
+  showSecondaryButton?: boolean;
   backgroundColor?: string;
   textColor?: string;
-  buttonColor?: string;
-  buttonTextColor?: string;
+  primaryButtonColor?: string;
+  primaryButtonTextColor?: string;
+  secondaryButtonColor?: string;
+  secondaryButtonTextColor?: string;
   backgroundImage?: string;
   overlayOpacity?: number;
   alignment?: "left" | "center" | "right";
   verticalAlignment?: "top" | "middle" | "bottom";
+  imagePosition?: "left" | "right" | "top" | "bottom" | "background";
+  imageWidth?: number;
   height?: number;
-  showButton?: boolean;
   isCarousel?: boolean;
-  slides?: BannerSlide[];
+  slides?: HeroSlide[];
   autoPlay?: boolean;
   autoPlayInterval?: number;
   showIndicators?: boolean;
@@ -39,46 +103,9 @@ interface BannerProps {
   margin?: { top: number; right: number; bottom: number; left: number };
   padding?: { top: number; right: number; bottom: number; left: number };
   hidden?: boolean;
-  border?: {
-    width: number;
-    style: "solid" | "dashed" | "dotted" | "none";
-    color: string;
-    radius: {
-      topLeft: number;
-      topRight: number;
-      bottomRight: number;
-      bottomLeft: number;
-    };
-  };
-  animation?: {
-    type: string;
-    duration: number;
-    delay: number;
-    easing: string;
-    repeat: number;
-  };
-  background?: {
-    type: string;
-    color: string;
-    image: {
-      url: string;
-      size: string;
-      position: string;
-      repeat: string;
-      customSize?: string;
-      customPosition?: string;
-    };
-    gradient: {
-      type: string;
-      angle: number;
-      colors: Array<{ color: string; position: number }>;
-    };
-    overlay: {
-      enabled: boolean;
-      color: string;
-      opacity: number;
-    };
-  };
+  border?: BorderProps;
+  animation?: AnimationValue;
+  background?: BackgroundValue;
   transitionEffect?: "fade" | "slide" | "zoom" | "none";
   transitionDuration?: number;
   enableParallax?: boolean;
@@ -86,11 +113,47 @@ interface BannerProps {
   enableKenBurns?: boolean;
   enableAccessibility?: boolean;
   customClasses?: string;
+  contentWidth?: number;
+  imageRatio?: number;
+  reverseOnMobile?: boolean;
 }
 
-const defaultBorder = {
+const defaultSlides: HeroSlide[] = [
+  {
+    id: "slide1",
+    title: "Veja como transformar sua intranet com o hywork cloud",
+    subtitle: "Descubra como transformar sua intranet rapidamente com o HyWork Cloud. Personalize, colabore e engaje sua equipe de forma intuitiva.",
+    primaryButtonText: "Leia mais",
+    primaryButtonUrl: "#",
+    secondaryButtonText: "Contato",
+    secondaryButtonUrl: "#",
+    backgroundImage: "/modern-office-space.png",
+  },
+  {
+    id: "slide2",
+    title: "Aumente a produtividade da sua equipe",
+    subtitle: "Ferramentas intuitivas que ajudam sua equipe a colaborar melhor e trabalhar de forma mais eficiente.",
+    primaryButtonText: "Saiba mais",
+    primaryButtonUrl: "#",
+    secondaryButtonText: "Demonstração",
+    secondaryButtonUrl: "#",
+    backgroundImage: "/team-collaboration.png",
+  },
+  {
+    id: "slide3",
+    title: "Soluções personalizadas para seu negócio",
+    subtitle: "Adapte o HyWork Cloud às necessidades específicas da sua empresa e veja os resultados rapidamente.",
+    primaryButtonText: "Explorar",
+    primaryButtonUrl: "#",
+    secondaryButtonText: "Fale conosco",
+    secondaryButtonUrl: "#",
+    backgroundImage: "/business-solution-abstract.png",
+  },
+];
+
+const defaultBorder: BorderProps = {
   width: 0,
-  style: "solid" as const,
+  style: "solid",
   color: "#000000",
   radius: {
     topLeft: 0,
@@ -100,7 +163,7 @@ const defaultBorder = {
   },
 };
 
-const defaultAnimation = {
+const defaultAnimation: AnimationValue = {
   type: "none",
   duration: 500,
   delay: 0,
@@ -108,11 +171,11 @@ const defaultAnimation = {
   repeat: 0,
 };
 
-const defaultBackground = {
+const defaultBackground: BackgroundValue = {
   type: "color",
-  color: "#014973",
+  color: "#ffffff",
   image: {
-    url: "",
+    url: "/modern-office-space.png",
     size: "cover",
     position: "center",
     repeat: "no-repeat",
@@ -121,40 +184,47 @@ const defaultBackground = {
     type: "linear",
     angle: 90,
     colors: [
-      { color: "#014973", position: 0 },
-      { color: "#0277bd", position: 100 },
+      { color: "#ffffff", position: 0 },
+      { color: "#f5f5f5", position: 100 },
     ],
   },
   overlay: {
-    enabled: true,
+    enabled: false,
     color: "#000000",
-    opacity: 0.5,
+    opacity: 0.3,
   },
 };
 
-export default function StaticBanner({
-  title = "Bem vindo ao hycloud",
-  subtitle = "Sua nova intranet de um jeito diferente",
-  buttonText = "Leia mais",
-  buttonUrl = "#",
-  backgroundColor = "#014973",
-  textColor = "#ffffff",
-  buttonColor = "#ffffff",
-  buttonTextColor = "#014973",
-  backgroundImage = "",
-  overlayOpacity = 0.5,
-  alignment = "center",
+export default function StaticHeroCarousel({
+  title = "Veja como transformar sua intranet com o hywork cloud",
+  subtitle = "Descubra como transformar sua intranet rapidamente com o HyWork Cloud. Personalize, colabore e engaje sua equipe de forma intuitiva.",
+  primaryButtonText = "Leia mais",
+  primaryButtonUrl = "#",
+  secondaryButtonText = "Contato",
+  secondaryButtonUrl = "#",
+  showPrimaryButton = true,
+  showSecondaryButton = true,
+  backgroundColor = "#ffffff",
+  textColor = "#1f272f",
+  primaryButtonColor = "#014973",
+  primaryButtonTextColor = "#ffffff",
+  secondaryButtonColor = "#dfe4ea",
+  secondaryButtonTextColor = "#1f272f",
+  backgroundImage = "/modern-office-space.png",
+  overlayOpacity = 0.3,
+  alignment = "left",
   verticalAlignment = "middle",
-  height = 400,
-  showButton = true,
+  imagePosition = "right",
+  imageWidth = 50,
+  height = 500,
   isCarousel = false,
-  slides = [],
+  slides = defaultSlides,
   autoPlay = true,
   autoPlayInterval = 5000,
   showIndicators = true,
   showArrows = true,
   margin = { top: 0, right: 0, bottom: 0, left: 0 },
-  padding = { top: 20, right: 20, bottom: 20, left: 20 },
+  padding = { top: 40, right: 40, bottom: 40, left: 40 },
   hidden = false,
   border = defaultBorder,
   animation = defaultAnimation,
@@ -166,17 +236,20 @@ export default function StaticBanner({
   enableKenBurns = false,
   enableAccessibility = true,
   customClasses = "",
-}: BannerProps) {
+  contentWidth = 50,
+  imageRatio = 1.5,
+  reverseOnMobile = false,
+}: HeroSectionProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const autoPlayRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Configure autoplay for carousel
+  // Configurar autoplay para o carrossel
   useEffect(() => {
     if (isCarousel && autoPlay) {
       autoPlayRef.current = setInterval(() => {
-        setCurrentSlide((prev) => (prev === (slides?.length || 0) - 1 ? 0 : prev + 1));
+        setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
       }, autoPlayInterval);
     }
 
@@ -185,9 +258,9 @@ export default function StaticBanner({
         clearInterval(autoPlayRef.current);
       }
     };
-  }, [isCarousel, autoPlay, autoPlayInterval, slides?.length]);
+  }, [isCarousel, autoPlay, autoPlayInterval, slides.length]);
 
-  // Parallax effect
+  // Efeito de parallax
   useEffect(() => {
     if (enableParallax && containerRef.current) {
       const handleMouseMove = (e: MouseEvent) => {
@@ -205,11 +278,11 @@ export default function StaticBanner({
   }, [enableParallax]);
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev === (slides?.length || 0) - 1 ? 0 : prev + 1));
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? (slides?.length || 0) - 1 : prev - 1));
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
   };
 
   const goToSlide = (index: number) => {
@@ -255,7 +328,7 @@ export default function StaticBanner({
       return { backgroundImage: gradientType };
     }
 
-    // Fallback to previous behavior
+    // Fallback para o comportamento anterior
     if (backgroundImage) {
       return {
         backgroundImage: `linear-gradient(rgba(0, 0, 0, ${overlayOpacity}), rgba(0, 0, 0, ${overlayOpacity})), url(${backgroundImage})`,
@@ -266,7 +339,7 @@ export default function StaticBanner({
     return { backgroundColor };
   };
 
-  // Helper function to convert hex to rgb
+  // Função auxiliar para converter hex para rgb
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result ? `${Number.parseInt(result[1], 16)}, ${Number.parseInt(result[2], 16)}, ${Number.parseInt(result[3], 16)}` : "0, 0, 0";
@@ -286,7 +359,7 @@ export default function StaticBanner({
     paddingLeft: `${padding.left}px`,
   };
 
-  const borderStyle: React.CSSProperties = {
+  const borderStyle: Record<string, any> = {
     borderWidth: border.width > 0 ? `${border.width}px` : 0,
     borderStyle: border.style,
     borderColor: border.color,
@@ -301,7 +374,7 @@ export default function StaticBanner({
     borderStyle.border = "0px solid transparent";
   }
 
-  // Styles for parallax effect
+  // Estilos para efeito de parallax
   const parallaxStyle = enableParallax
     ? {
         transform: `translate(${mousePosition.x * parallaxIntensity * -1}px, ${mousePosition.y * parallaxIntensity * -1}px)`,
@@ -309,14 +382,14 @@ export default function StaticBanner({
       }
     : {};
 
-  // Styles for Ken Burns effect
+  // Estilos para efeito Ken Burns
   const kenBurnsStyle = enableKenBurns
     ? {
         animation: "kenburns 20s ease-in-out infinite alternate",
       }
     : {};
 
-  // Configure animations with Framer Motion
+  // Configurar animações com Framer Motion
   const getAnimationProps = () => {
     if (animation.type === "none") {
       return {
@@ -376,7 +449,7 @@ export default function StaticBanner({
     }
   };
 
-  // Configure slide transitions
+  // Configurar transições de slides
   const getSlideTransition = () => {
     switch (transitionEffect) {
       case "fade":
@@ -407,55 +480,141 @@ export default function StaticBanner({
     }
   };
 
+  // Determinar a ordem dos elementos com base na posição da imagem
+  const getFlexDirection = () => {
+    if (imagePosition === "background") {
+      return "flex-col";
+    }
+
+    if (imagePosition === "left") {
+      return "flex-row-reverse";
+    }
+
+    if (imagePosition === "right") {
+      return "flex-row";
+    }
+
+    if (imagePosition === "top") {
+      return "flex-col-reverse";
+    }
+
+    if (imagePosition === "bottom") {
+      return "flex-col";
+    }
+
+    return "flex-row";
+  };
+
+  // Determinar a largura do conteúdo e da imagem
+  const getContentStyle = () => {
+    if (imagePosition === "background") {
+      return { width: "100%" };
+    }
+
+    if (imagePosition === "left" || imagePosition === "right") {
+      return { width: `${contentWidth}%` };
+    }
+
+    return { width: "100%" };
+  };
+
+  const getImageStyle = () => {
+    if (imagePosition === "background") {
+      return { display: "none" };
+    }
+
+    if (imagePosition === "left" || imagePosition === "right") {
+      return { width: `${imageWidth}%` };
+    }
+
+    return { width: "100%" };
+  };
+
+  // Renderizar o conteúdo do hero
+  const renderHeroContent = (slideData: {
+    title: string;
+    subtitle: string;
+    primaryButtonText: string;
+    primaryButtonUrl: string;
+    secondaryButtonText: string;
+    secondaryButtonUrl: string;
+    backgroundImage: string;
+  }) => {
+    return (
+      <div
+        className={`flex ${getFlexDirection()} ${reverseOnMobile ? "flex-col-reverse md:flex-row" : ""} w-full h-full`}
+        style={{
+          ...paddingStyle,
+          ...parallaxStyle,
+        }}
+      >
+        <div className={`flex flex-col ${verticalAlignmentClass} ${textAlignmentClass} p-6 md:p-12`} style={getContentStyle()}>
+          <h1 className="text-2xl md:text-4xl font-bold mb-4" style={{ color: textColor }}>
+            {isCarousel ? slideData.title : title}
+          </h1>
+
+          <p className="text-base md:text-lg mb-6" style={{ color: textColor }}>
+            {isCarousel ? slideData.subtitle : subtitle}
+          </p>
+
+          <div className="flex flex-wrap gap-4">
+            {showPrimaryButton && (
+              <Button className="px-4 py-2 rounded font-medium" style={{ backgroundColor: primaryButtonColor, color: primaryButtonTextColor }}>
+                {isCarousel ? slideData.primaryButtonText : primaryButtonText}
+              </Button>
+            )}
+
+            {showSecondaryButton && (
+              <Button className="px-4 py-2 rounded font-medium" style={{ backgroundColor: secondaryButtonColor, color: secondaryButtonTextColor }}>
+                {isCarousel ? slideData.secondaryButtonText : secondaryButtonText}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {imagePosition !== "background" && (
+          <div
+            className={`hidden md:block bg-cover bg-center flex-shrink-0 ${enableKenBurns ? "ken-burns" : ""}`}
+            style={{
+              ...getImageStyle(),
+              backgroundImage: `url(${isCarousel ? slideData.backgroundImage : backgroundImage})`,
+              ...kenBurnsStyle,
+            }}
+          ></div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <motion.div
-      className={`relative ${customClasses}`}
+      className={`relative group overflow-hidden ${customClasses}`}
       {...getAnimationProps()}
       style={{
         ...marginStyle,
         ...borderStyle,
-        overflow: "hidden",
+        height: `${height}px`,
       }}
     >
-      <div ref={containerRef} className="relative overflow-hidden" style={{ height: `${height}px` }}>
-        {isCarousel && slides && slides.length > 0 ? (
+      <div ref={containerRef} className="relative w-full h-full overflow-hidden">
+        {isCarousel ? (
           <div className="h-full">
             <AnimatePresence mode="wait">
               <motion.div key={currentSlide} className="absolute inset-0" {...getSlideTransition()}>
                 <div
-                  className={`w-full h-full ${enableKenBurns ? "ken-burns" : ""}`}
+                  className="w-full h-full"
                   style={{
                     ...getBackgroundStyle(),
-                    ...kenBurnsStyle,
+                    ...(imagePosition === "background"
+                      ? {
+                          backgroundImage: `linear-gradient(rgba(0, 0, 0, ${overlayOpacity}), rgba(0, 0, 0, ${overlayOpacity})), url(${slides[currentSlide].backgroundImage})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : {}),
                   }}
                 >
-                  <div
-                    className={`w-full h-full flex flex-col ${verticalAlignmentClass} ${textAlignmentClass}`}
-                    style={{
-                      ...paddingStyle,
-                      ...parallaxStyle,
-                    }}
-                  >
-                    <motion.h1 className="text-4xl font-bold mb-4" style={{ color: textColor }}>
-                      {slides[currentSlide].title}
-                    </motion.h1>
-
-                    <motion.p className="text-lg mb-6" style={{ color: textColor }}>
-                      {slides[currentSlide].subtitle}
-                    </motion.p>
-
-                    {showButton && (
-                      <Button
-                        style={{
-                          backgroundColor: buttonColor,
-                          color: buttonTextColor,
-                        }}
-                        asChild
-                      >
-                        <a href={slides[currentSlide].buttonUrl}>{slides[currentSlide].buttonText}</a>
-                      </Button>
-                    )}
-                  </div>
+                  {renderHeroContent(slides[currentSlide])}
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -470,7 +629,7 @@ export default function StaticBanner({
                   <ChevronLeft size={24} />
                 </button>
                 <button
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-all z-10"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 rounded-full p-2 hover:bg-opacity-100 transition-all z-10"
                   onClick={nextSlide}
                   aria-label="Próximo slide"
                 >
@@ -494,59 +653,47 @@ export default function StaticBanner({
           </div>
         ) : (
           <div
-            className={`w-full h-full ${enableKenBurns ? "ken-burns" : ""}`}
+            className="w-full h-full"
             style={{
               ...getBackgroundStyle(),
-              ...kenBurnsStyle,
+              ...(imagePosition === "background"
+                ? {
+                    backgroundImage: `linear-gradient(rgba(0, 0, 0, ${overlayOpacity}), rgba(0, 0, 0, ${overlayOpacity})), url(${backgroundImage})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }
+                : {}),
             }}
           >
-            <div
-              className={`w-full h-full flex flex-col ${verticalAlignmentClass} ${textAlignmentClass}`}
-              style={{
-                ...paddingStyle,
-                ...parallaxStyle,
-              }}
-            >
-              <motion.h1 className="text-4xl font-bold mb-4" style={{ color: textColor }}>
-                {title}
-              </motion.h1>
-
-              <motion.p className="text-lg mb-6" style={{ color: textColor }}>
-                {subtitle}
-              </motion.p>
-
-              {showButton && (
-                <Button
-                  style={{
-                    backgroundColor: buttonColor,
-                    color: buttonTextColor,
-                  }}
-                  asChild
-                >
-                  <a href={buttonUrl}>{buttonText}</a>
-                </Button>
-              )}
-            </div>
+            {renderHeroContent({
+              title,
+              subtitle,
+              primaryButtonText,
+              primaryButtonUrl,
+              secondaryButtonText,
+              secondaryButtonUrl,
+              backgroundImage,
+            })}
           </div>
         )}
       </div>
 
-      {/* Add Ken Burns animation styles */}
-      {enableKenBurns && (
-        <style jsx global>{`
-          @keyframes kenburns {
-            0% {
-              transform: scale(1) translate(0px, 0px);
-            }
-            100% {
-              transform: scale(1.1) translate(-10px, -10px);
-            }
+      <style jsx global>{`
+        @keyframes kenburns {
+          0% {
+            transform: scale(1) translate(0px, 0px);
           }
-          .ken-burns {
-            animation: kenburns 20s ease-in-out infinite alternate;
+          50% {
+            transform: scale(1.1) translate(-10px, -10px);
           }
-        `}</style>
-      )}
+          100% {
+            transform: scale(1) translate(0px, 0px);
+          }
+        }
+        .ken-burns {
+          animation: kenburns 20s ease-in-out infinite alternate;
+        }
+      `}</style>
     </motion.div>
   );
 }
