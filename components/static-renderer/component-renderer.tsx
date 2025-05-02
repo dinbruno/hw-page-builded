@@ -24,6 +24,8 @@ const StaticHeroCarousel = dynamic(() => import("./components/static-hero-carous
 const StaticText = dynamic(() => import("./components/static-text"));
 const StaticImageGallery = dynamic(() => import("./components/static-image-gallery"));
 const StaticImage = dynamic(() => import("./components/static-image"));
+const StaticGridLayout = dynamic(() => import("./components/static-grid-layout"));
+const StaticFooter = dynamic(() => import("./components/static-footer"));
 
 import {
   StaticTwoEqualColumns,
@@ -57,6 +59,8 @@ const componentMap: Record<string, any> = {
   Text: StaticText,
   ImageGallery: StaticImageGallery,
   Image: StaticImage,
+  GridLayout: StaticGridLayout,
+  Footer: StaticFooter,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
@@ -176,10 +180,73 @@ export function ComponentRenderer({ content }: { content: any }) {
         componentType === "TwoEqualColumns" ||
         componentType === "ThreeEqualColumns" ||
         componentType === "SidebarMainLayout" ||
-        componentType === "ThreeColumnsWideCenter"
+        componentType === "ThreeColumnsWideCenter" ||
+        componentType === "GridLayout"
       ) {
         const layoutStyles = extractLayoutStyles(node.props);
         console.log(`SOLUÇÂO GENÉRICA: Renderizando o layout ${componentType} com ID ${nodeId}`);
+
+        // Special handling for GridLayout
+        if (componentType === "GridLayout") {
+          console.log("Renderizando GridLayout:", { nodeId, linkedNodes: node.linkedNodes });
+
+          // If we have linkedNodes, pass them through
+          if (node.linkedNodes && Object.keys(node.linkedNodes).length > 0) {
+            const columnProps: Record<string, React.ReactNode> = {};
+
+            // Process each linked node
+            Object.entries(node.linkedNodes).forEach(([linkKey, linkedNodeId]) => {
+              const linkedNode = content[linkedNodeId as string];
+              if (linkedNode) {
+                // Render the content of each linked node
+                let linkedNodeContent;
+
+                // If the linked node has children, it might be a column with content
+                if (linkedNode.nodes && linkedNode.nodes.length > 0) {
+                  linkedNodeContent = linkedNode.nodes.map((childId: string) => renderNode(childId));
+                } else {
+                  // Otherwise, just render the node itself
+                  linkedNodeContent = renderNode(linkedNodeId as string);
+                }
+
+                columnProps[linkedNodeId as string] = linkedNodeContent;
+              }
+            });
+
+            console.log("GridLayout props populated:", Object.keys(columnProps));
+
+            // Return the component with all necessary props
+            return (
+              <StaticComponent
+                key={nodeId}
+                {...node.props}
+                style={{ ...(node.props?.style || {}), ...layoutStyles }}
+                id={nodeId}
+                linkedNodes={node.linkedNodes}
+                {...columnProps}
+              />
+            );
+          }
+
+          // If we have child nodes that might be columns
+          if (node.nodes && node.nodes.length > 0) {
+            const columnProps: Record<string, React.ReactNode> = {};
+
+            // Process each child node as potential column content
+            node.nodes.forEach((childId: string, index) => {
+              const childNode = content[childId];
+              if (childNode) {
+                const columnKey = `column-${childNode.id || `col${index + 1}`}-${index}`;
+                columnProps[columnKey] = renderNode(childId);
+              }
+            });
+
+            // Return with the column content
+            return (
+              <StaticComponent key={nodeId} {...node.props} style={{ ...(node.props?.style || {}), ...layoutStyles }} id={nodeId} {...columnProps} />
+            );
+          }
+        }
 
         if (node.linkedNodes && Object.keys(node.linkedNodes).length > 0) {
           console.log("Encontrado linkedNodes para processar:", node.linkedNodes);
