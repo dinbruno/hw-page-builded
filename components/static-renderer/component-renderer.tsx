@@ -26,6 +26,7 @@ const StaticImageGallery = dynamic(() => import("./components/static-image-galle
 const StaticImage = dynamic(() => import("./components/static-image"));
 const StaticGridLayout = dynamic(() => import("./components/static-grid-layout"));
 const StaticFooter = dynamic(() => import("./components/static-footer"));
+const StaticContentBlock = dynamic(() => import("./components/static-content-block"));
 
 import {
   StaticTwoEqualColumns,
@@ -61,6 +62,7 @@ const componentMap: Record<string, any> = {
   Image: StaticImage,
   GridLayout: StaticGridLayout,
   Footer: StaticFooter,
+  ContentBlock: StaticContentBlock,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
