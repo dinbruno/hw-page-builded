@@ -21,6 +21,7 @@ const StaticTable = dynamic(() => import("./components/static-table"));
 const StaticProductCarousel = dynamic(() => import("./components/static-product-carousel"));
 const StaticProductCard = dynamic(() => import("./components/static-product-card"));
 const StaticHeroCarousel = dynamic(() => import("./components/static-hero-carousel"));
+const StaticText = dynamic(() => import("./components/static-text"));
 
 import {
   StaticTwoEqualColumns,
@@ -51,6 +52,7 @@ const componentMap: Record<string, any> = {
   ProductCarousel: StaticProductCarousel,
   ProductCard: StaticProductCard,
   HeroSection: StaticHeroCarousel,
+  Text: StaticText,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {

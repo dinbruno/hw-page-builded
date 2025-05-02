@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 
 interface AnimationValue {
@@ -10,23 +11,22 @@ interface AnimationValue {
   repeat: number;
 }
 
-interface ParagraphProps {
+interface TextProps {
   text?: string;
   fontSize?: number;
-  color?: string;
-  alignment?: "left" | "center" | "right" | "justify";
-  lineHeight?: number;
+  textAlign?: "left" | "center" | "right";
   fontWeight?: "normal" | "medium" | "semibold" | "bold";
-  fontFamily?: string;
+  color?: string;
+  lineHeight?: number;
   letterSpacing?: number;
-  textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
-  textDecoration?: "none" | "underline" | "line-through";
-  hidden?: boolean;
-  className?: string;
+  fontFamily?: string;
   margin?: { top: number; right: number; bottom: number; left: number };
   padding?: { top: number; right: number; bottom: number; left: number };
+  hidden?: boolean;
   animation?: AnimationValue;
   width?: "auto" | "full";
+  textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  textDecoration?: "none" | "underline" | "line-through";
   overflow?: "visible" | "hidden" | "ellipsis";
   maxLines?: number;
   customClasses?: string;
@@ -44,28 +44,27 @@ const defaultAnimation: AnimationValue = {
   repeat: 0,
 };
 
-export default function StaticParagraph({
-  text = "Clique para editar este texto. Você pode adicionar qualquer conteúdo aqui.",
+export default function StaticText({
+  text = "Texto editável",
   fontSize = 16,
-  color = "#111928",
-  alignment = "left",
-  lineHeight = 1.5,
+  textAlign = "left",
   fontWeight = "normal",
-  fontFamily = "inherit",
+  color = "#000000",
+  lineHeight = 1.5,
   letterSpacing = 0,
-  textTransform = "none",
-  textDecoration = "none",
-  hidden = false,
-  className = "",
+  fontFamily = "inherit",
   margin = { top: 0, right: 0, bottom: 0, left: 0 },
   padding = { top: 0, right: 0, bottom: 0, left: 0 },
+  hidden = false,
   animation = defaultAnimation,
   width = "full",
+  textTransform = "none",
+  textDecoration = "none",
   overflow = "visible",
   maxLines = 0,
   customClasses = "",
   background = { color: "transparent", opacity: 1 },
-}: ParagraphProps) {
+}: TextProps) {
   if (hidden) return null;
 
   const getAnimationProps = () => {
@@ -127,20 +126,6 @@ export default function StaticParagraph({
     }
   };
 
-  const textAlignmentClass = {
-    left: "text-left",
-    center: "text-center",
-    right: "text-right",
-    justify: "text-justify",
-  }[alignment];
-
-  const fontWeightClass = {
-    normal: "font-normal",
-    medium: "font-medium",
-    semibold: "font-semibold",
-    bold: "font-bold",
-  }[fontWeight];
-
   const marginStyle = {
     marginTop: `${margin.top}px`,
     marginRight: `${margin.right}px`,
@@ -163,7 +148,6 @@ export default function StaticParagraph({
     whiteSpace: overflow === "ellipsis" ? "nowrap" : "normal",
   };
 
-  // Add max lines if specified
   if (maxLines > 0 && overflow === "ellipsis") {
     overflowStyles.display = "-webkit-box";
     overflowStyles.WebkitLineClamp = maxLines;
@@ -174,22 +158,23 @@ export default function StaticParagraph({
   const backgroundStyle = background.color !== "transparent" ? { backgroundColor: background.color, opacity: background.opacity } : {};
 
   return (
-    <motion.div className={`${widthClass} ${className} ${customClasses}`} style={marginStyle} {...getAnimationProps()}>
+    <motion.div className={`${widthClass} ${customClasses}`} style={marginStyle} {...getAnimationProps()}>
       <p
         style={{
           fontSize: `${fontSize}px`,
+          textAlign,
+          fontWeight,
           color,
           lineHeight,
-          fontWeight,
-          fontFamily,
           letterSpacing: `${letterSpacing}px`,
+          fontFamily,
           textTransform,
           textDecoration,
           ...paddingStyle,
           ...overflowStyles,
           ...backgroundStyle,
         }}
-        className={`${textAlignmentClass} ${fontWeightClass} w-full min-h-[1em]`}
+        className="min-h-[1em] w-full"
         dangerouslySetInnerHTML={{ __html: text }}
       />
     </motion.div>
