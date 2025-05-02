@@ -397,14 +397,13 @@ export default function StaticProductCarousel({
 
         <div
           ref={carouselRef}
-          className="flex overflow-x-auto"
+          className="flex overflow-x-auto scrollbar-hide"
           style={{
             scrollSnapType: "x mandatory",
             scrollBehavior: "smooth",
             WebkitOverflowScrolling: "touch",
             msOverflowStyle: "none",
             scrollbarWidth: "none",
-            "::-webkit-scrollbar": { display: "none" },
           }}
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
