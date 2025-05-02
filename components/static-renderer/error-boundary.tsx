@@ -16,7 +16,6 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
       console.error("Erro capturado pelo ErrorBoundary:", event.error);
       setHasError(true);
 
-      // Evitar que o erro seja propagado para o console
       event.preventDefault();
     };
 

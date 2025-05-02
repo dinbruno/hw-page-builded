@@ -6,17 +6,13 @@ import { PageRenderer } from "@/components/static-renderer/page-renderer";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 
-// Dynamic import with no SSR to prevent hydration issues
 const DynamicPageRenderer = dynamic(() => import("@/components/static-renderer/page-renderer").then((mod) => ({ default: mod.PageRenderer })), {
   ssr: false,
 });
 
-// This is an internal route handler for the root route (/)
-// It renders the homepage directly without redirecting
 export default async function RootHandler() {
   console.log("_root-handler iniciado");
 
-  // Verificar cookies para garantir autenticação
   const cookieStore = cookies();
   const authToken = cookieStore.get("authToken")?.value;
   const tenantId = cookieStore.get("x-tenant")?.value || cookieStore.get("tenantId")?.value;
@@ -35,21 +31,17 @@ export default async function RootHandler() {
 
   try {
     console.log("Obtendo workspaces...");
-    // Se já temos o workspaceId, podemos pular a obtenção de workspaces
     let currentWorkspaceId = workspaceId;
 
     if (!currentWorkspaceId) {
-      // Get the user's workspaces
       const workspaces = await WorkspaceService.getWorkspaces();
       console.log("Workspaces obtidos:", workspaces?.length || 0);
 
       if (!workspaces || workspaces.length === 0) {
-        // No workspaces, redirect to onboarding
         console.log("Sem workspaces, redirecionando para onboarding");
         return redirect("/onboarding/welcome");
       }
 
-      // Use first workspace
       currentWorkspaceId = workspaces[0].id;
       console.log("Usando o primeiro workspace:", currentWorkspaceId);
     }
@@ -57,7 +49,6 @@ export default async function RootHandler() {
     console.log("Usando workspace:", currentWorkspaceId);
 
     try {
-      // Tentar obter a página diretamente pelo nome "Página Inicial"
       console.log("Buscando páginas para o workspace:", currentWorkspaceId);
       const pages = await PageService.getAll(currentWorkspaceId, authToken, tenantId);
       console.log("Páginas obtidas:", pages?.length || 0);
@@ -65,7 +56,6 @@ export default async function RootHandler() {
       if (!pages || pages.length === 0) {
         console.log("Nenhuma página encontrada para o workspace");
 
-        // Tentativa de fallback - criar uma página em branco ou mostrar página de boas-vindas
         return (
           <div className="flex flex-col items-center justify-center min-h-screen">
             <h1 className="text-3xl font-bold mb-4">Bem-vindo ao seu workspace</h1>
@@ -80,13 +70,11 @@ export default async function RootHandler() {
         );
       }
 
-      // Debug: Listar todas as páginas encontradas
       console.log(
         "Páginas disponíveis:",
         pages.map((p) => ({ id: p.id, name: p.name, slug: p.slug }))
       );
 
-      // Encontrar a página inicial do workspace ou usar a primeira disponível
       const homePage =
         pages.find((page: any) => page.name === "Página Inicial" || page.name === "Home" || page.slug === "pagina-inicial" || page.slug === "home") ||
         pages[0];
@@ -98,7 +86,6 @@ export default async function RootHandler() {
 
       console.log("Página inicial encontrada:", homePage.id, homePage.name, homePage.slug);
 
-      // Obter os dados completos da página
       console.log("Buscando dados completos da página:", homePage.id);
       const pageData = await PageService.getById(homePage.id, currentWorkspaceId, authToken, tenantId);
       console.log("Dados da página obtidos:", !!pageData, pageData?.id);
@@ -108,7 +95,6 @@ export default async function RootHandler() {
         return notFound();
       }
 
-      // Verificar se a página tem conteúdo
       if (!pageData.content) {
         console.log("A página não tem conteúdo");
         return (
@@ -121,9 +107,8 @@ export default async function RootHandler() {
         );
       }
 
-      // Armazenar o workspaceId nos cookies do servidor para futuras requisições
       cookies().set("workspaceId", currentWorkspaceId, {
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 7,
         path: "/",
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -131,9 +116,7 @@ export default async function RootHandler() {
 
       console.log("Renderizando página inicial");
 
-      // Tentar renderizar com um try/catch para capturar erros de renderização
       try {
-        // Usar o componente Dynamic para evitar problemas de hidratação
         return <DynamicPageRenderer pageData={pageData} />;
       } catch (renderError) {
         console.error("Erro ao renderizar a página:", renderError);
@@ -152,7 +135,6 @@ export default async function RootHandler() {
     }
   } catch (error) {
     console.error("Error in root handler:", error);
-    // Fallback to login page if any error occurs
     return redirect("/login");
   }
 }

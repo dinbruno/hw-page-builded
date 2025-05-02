@@ -91,27 +91,6 @@ export function ComponentRenderer({ content }: { content: any }) {
   debugContent("ROOT");
   console.log("=====================================");
 
-  const isColumnNode = (node: any) => {
-    return (
-      node && (node.type?.resolvedName === "Column" || node.type === "Column" || (node.props && node.props.canvas) || node.displayName === "Column")
-    );
-  };
-
-  const renderColumnContents = (columnId: string) => {
-    const columnNode = content[columnId];
-
-    if (!columnNode) return null;
-
-    if (columnNode.nodes && columnNode.nodes.length > 0) {
-      return columnNode.nodes.map((childId: string) => {
-        if (!content[childId]) return null;
-        return renderNode(childId);
-      });
-    }
-
-    return null;
-  };
-
   const renderNode = (nodeId: string) => {
     const node = content[nodeId];
 

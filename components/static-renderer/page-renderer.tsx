@@ -17,7 +17,6 @@ export function PageRenderer({ pageData }: { pageData: Page | any }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading to ensure all components are ready
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 500);
