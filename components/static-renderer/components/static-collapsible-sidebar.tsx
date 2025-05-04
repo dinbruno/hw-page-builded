@@ -29,8 +29,6 @@ interface SpacingValue {
 interface CollapsibleSidebarProps {
   logoSrc?: string;
   logoAlt?: string;
-  title?: string;
-  titleColor?: string;
   backgroundColor?: string;
   textColor?: string;
   activeColor?: string;
@@ -53,34 +51,31 @@ interface CollapsibleSidebarProps {
   padding: SpacingValue;
   contentPadding: SpacingValue;
   children?: React.ReactNode;
+  sidebarItems?: Array<{
+    id: string;
+    iconName: keyof typeof IconComponents;
+    label: string;
+    href: string;
+  }>;
 }
-
-interface SidebarItem {
-  id: string;
-  iconName: keyof typeof IconComponents;
-  label: string;
-  href: string;
-}
-
-const defaultItems: SidebarItem[] = [
-  { id: "home", iconName: "Home", label: "Página Inicial", href: "/" },
-  { id: "users", iconName: "Users", label: "Usuários", href: "/usuarios" },
-  { id: "departments", iconName: "Briefcase", label: "Departamentos", href: "/departamentos" },
-  { id: "projects", iconName: "FolderClosed", label: "Projetos", href: "/projetos" },
-  { id: "documents", iconName: "FileText", label: "Documentos", href: "/documentos" },
-  { id: "groups", iconName: "Users2", label: "Grupos", href: "/grupos" },
-];
 
 // Valores padrão para espaçamento
 const defaultMargin: SpacingValue = { top: 0, right: 0, bottom: 0, left: 0 };
 const defaultPadding: SpacingValue = { top: 0, right: 0, bottom: 0, left: 0 };
 const defaultContentPadding: SpacingValue = { top: 16, right: 16, bottom: 16, left: 16 };
 
+const defaultItems = [
+  { id: "home", iconName: "Home" as const, label: "Página Inicial", href: "/" },
+  { id: "users", iconName: "Users" as const, label: "Usuários", href: "/usuarios" },
+  { id: "departments", iconName: "Briefcase" as const, label: "Departamentos", href: "/departamentos" },
+  { id: "projects", iconName: "FolderClosed" as const, label: "Projetos", href: "/projetos" },
+  { id: "documents", iconName: "FileText" as const, label: "Documentos", href: "/documentos" },
+  { id: "groups", iconName: "Users2" as const, label: "Grupos", href: "/grupos" },
+];
+
 export default function StaticCollapsibleSidebar({
   logoSrc = "/images/hycloud-logo.png",
   logoAlt = "HyWork Cloud",
-  title = "work cloud",
-  titleColor = "#1f272f",
   backgroundColor = "#ffffff",
   textColor = "#1f272f",
   activeColor = "#e8f0fe",
@@ -103,10 +98,10 @@ export default function StaticCollapsibleSidebar({
   padding = defaultPadding,
   contentPadding = defaultContentPadding,
   children,
+  sidebarItems = defaultItems,
 }: CollapsibleSidebarProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [activeItem, setActiveItem] = useState("home");
-  const items = defaultItems;
 
   // Update collapsed state when defaultCollapsed prop changes
   useEffect(() => {
@@ -132,7 +127,7 @@ export default function StaticCollapsibleSidebar({
         return "bottom-4";
       case "middle":
       default:
-        return "top-20";
+        return "top-1/2 -translate-y-1/2";
     }
   };
 
@@ -153,7 +148,7 @@ export default function StaticCollapsibleSidebar({
 
   return (
     <div
-      className="flex h-screen w-full"
+      className="gap-5 flex h-screen w-full"
       style={{
         margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`,
       }}
@@ -189,17 +184,12 @@ export default function StaticCollapsibleSidebar({
           <div className={`relative ${collapsed ? "w-8 h-8" : "w-10 h-10"} transition-all duration-300`}>
             <Image src={logoSrc || "/placeholder.svg?height=40&width=40"} alt={logoAlt} fill className="object-contain" />
           </div>
-          {!collapsed && (
-            <span className="ml-2 font-semibold text-lg" style={{ color: titleColor }}>
-              {title}
-            </span>
-          )}
         </div>
 
         {/* Navigation */}
         <nav className="flex-1 mt-6 overflow-y-auto">
           <ul className="space-y-1 px-2">
-            {items.map((item) => {
+            {sidebarItems.map((item) => {
               const IconComponent = IconComponents[item.iconName];
               const isActive = activeItem === item.id;
 
@@ -209,7 +199,7 @@ export default function StaticCollapsibleSidebar({
                     <button
                       className={`flex items-center w-full p-2 rounded-md transition-colors ${isActive ? "bg-opacity-10" : ""} ${
                         collapsed ? "justify-center" : ""
-                      }`}
+                      } hover:bg-opacity-5`}
                       style={{
                         backgroundColor: isActive ? activeColor : "transparent",
                         color: textColor,
@@ -227,17 +217,26 @@ export default function StaticCollapsibleSidebar({
         </nav>
       </motion.div>
 
-      {/* Content Area */}
-      <div
-        className="flex-1 h-full overflow-auto w-full"
-        style={{
-          backgroundColor: contentBackgroundColor,
-          width: "100%",
-          flex: "1 1 auto",
-          padding: `${contentPadding.top}px ${contentPadding.right}px ${contentPadding.bottom}px ${contentPadding.left}px`,
-        }}
-      >
-        {children}
+      {/* Content Area - Using the same structure as the original component */}
+      <div className="w-full h-full">
+        <div
+          id="content-area"
+          className="flex-1 h-full overflow-auto"
+          style={{
+            backgroundColor: contentBackgroundColor,
+          }}
+        >
+          <div
+            id="content-container"
+            className="w-full h-full"
+            style={{
+              backgroundColor: contentBackgroundColor,
+              padding: `${contentPadding.top}px ${contentPadding.right}px ${contentPadding.bottom}px ${contentPadding.left}px`,
+            }}
+          >
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );

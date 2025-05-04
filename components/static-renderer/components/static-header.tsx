@@ -7,7 +7,6 @@ import { Menu, X } from "lucide-react";
 
 interface StaticHeaderProps {
   logo?: string;
-  logoText?: string;
   logoHeight?: number;
   navItems?: { id: string; label: string; url: string }[];
   backgroundColor?: string;
@@ -49,7 +48,6 @@ interface StaticHeaderProps {
 
 export default function StaticHeader({
   logo = "",
-  logoText = "",
   logoHeight = 40,
   navItems = [],
   backgroundColor = "#ffffff",
@@ -157,13 +155,8 @@ export default function StaticHeader({
       <div className="flex items-center justify-between" style={innerContainerStyle}>
         <div className="flex items-center">
           {logo && (
-            <div className="mr-4">
+            <div>
               <Image src={logo} alt="Logo" width={logoHeight * 1.5} height={logoHeight} priority className="object-contain" />
-            </div>
-          )}
-          {logoText && (
-            <div className="text-xl font-bold" style={{ color: textColor }}>
-              {logoText}
             </div>
           )}
         </div>
