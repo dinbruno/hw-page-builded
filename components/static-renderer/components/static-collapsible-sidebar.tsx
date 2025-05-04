@@ -1,6 +1,6 @@
 "use client";
 
-import type React from "react";
+import React from "react";
 
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -57,6 +57,9 @@ interface CollapsibleSidebarProps {
     label: string;
     href: string;
   }>;
+  linkedNodes?: Record<string, string>;
+  nodes?: string[];
+  [key: string]: any;
 }
 
 // Valores padrão para espaçamento
@@ -99,9 +102,22 @@ export default function StaticCollapsibleSidebar({
   contentPadding = defaultContentPadding,
   children,
   sidebarItems = defaultItems,
+  linkedNodes = {},
+  nodes = [],
+  ...rest
 }: CollapsibleSidebarProps) {
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [activeItem, setActiveItem] = useState("home");
+
+  // Debug para verificar props
+  useEffect(() => {
+    console.log("[StaticCollapsibleSidebar] Props recebidas:", {
+      children: Boolean(children),
+      linkedNodes,
+      nodes,
+      restKeys: Object.keys(rest),
+    });
+  }, [children, linkedNodes, nodes, rest]);
 
   // Update collapsed state when defaultCollapsed prop changes
   useEffect(() => {
@@ -146,8 +162,59 @@ export default function StaticCollapsibleSidebar({
     }
   };
 
+  // Renderizar o conteúdo da área de conteúdo com melhorias de debugging
+  const renderContent = () => {
+    console.log("[StaticCollapsibleSidebar] Tentando renderizar conteúdo com:", {
+      linkedNodes,
+      propsKeys: Object.keys(rest),
+    });
+
+    // 1. Verificar se existe linkedNode para content-area (prioridade máxima)
+    if (linkedNodes && linkedNodes["content-area"]) {
+      const contentNodeId = linkedNodes["content-area"];
+      console.log("[StaticCollapsibleSidebar] Encontrou content-area com ID:", contentNodeId);
+
+      if (rest[contentNodeId]) {
+        console.log("[StaticCollapsibleSidebar] Renderizando conteúdo do nó:", contentNodeId);
+        return rest[contentNodeId];
+      }
+    }
+
+    // 2. Verificar nós específicos para o JSON fornecido
+    const specificIds = ["YF9E8eUcGG", "pRMJxV-KZO"];
+    for (const id of specificIds) {
+      if (rest[id]) {
+        console.log("[StaticCollapsibleSidebar] Renderizando nó específico:", id);
+        return rest[id];
+      }
+    }
+
+    // 3. Verificar propriedades que possam conter conteúdo baseado em nomes comuns
+    for (const key of Object.keys(rest)) {
+      const keyLower = key.toLowerCase();
+      if (keyLower.includes("column") || keyLower.includes("content") || keyLower.includes("container") || keyLower.includes("area")) {
+        console.log("[StaticCollapsibleSidebar] Renderizando pelo nome da propriedade:", key);
+        return rest[key];
+      }
+    }
+
+    // 4. Usar children se disponível
+    if (children) {
+      console.log("[StaticCollapsibleSidebar] Renderizando children");
+      return children;
+    }
+
+    // 5. Placeholder como último recurso
+    return (
+      <div className="flex items-center justify-center h-full min-h-[200px] w-full border-2 border-dashed border-gray-300 rounded-md bg-gray-50">
+        <p className="text-sm text-gray-500">Área de Conteúdo (Vazia)</p>
+      </div>
+    );
+  };
+
   return (
     <div
+      data-component-type="navigation"
       className="gap-5 flex h-screen w-full"
       style={{
         margin: `${margin.top}px ${margin.right}px ${margin.bottom}px ${margin.left}px`,
@@ -217,7 +284,7 @@ export default function StaticCollapsibleSidebar({
         </nav>
       </motion.div>
 
-      {/* Content Area - Using the same structure as the original component */}
+      {/* Content Area - usando a estrutura original */}
       <div className="w-full h-full">
         <div
           id="content-area"
@@ -234,7 +301,7 @@ export default function StaticCollapsibleSidebar({
               padding: `${contentPadding.top}px ${contentPadding.right}px ${contentPadding.bottom}px ${contentPadding.left}px`,
             }}
           >
-            {children}
+            {renderContent()}
           </div>
         </div>
       </div>
