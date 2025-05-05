@@ -15,6 +15,7 @@ interface ResponsiveLayoutProps {
   displayName?: string;
   nodes?: string[];
   linkedNodes?: Record<string, string>;
+  columnWidths?: number[];
   [key: string]: any;
 }
 
@@ -29,6 +30,7 @@ export function StaticTwoEqualColumns({
   id,
   nodes,
   linkedNodes,
+  columnWidths = [50, 50],
   ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
@@ -37,6 +39,7 @@ export function StaticTwoEqualColumns({
     id,
     nodes,
     linkedNodes,
+    columnWidths,
     restKeys: Object.keys(rest),
   });
 
@@ -72,14 +75,24 @@ export function StaticTwoEqualColumns({
             gap: `${gap}px`,
           }}
         >
-          <div className="static-column w-[calc(50%-8px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[0]}% - ${gap / 2}px)`,
+            }}
+          >
             {column0Content || (
               <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
                 <p className="text-sm text-gray-500">Coluna 1 (Vazia)</p>
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(50%-8px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[1]}% - ${gap / 2}px)`,
+            }}
+          >
             {column1Content || (
               <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
                 <p className="text-sm text-gray-500">Coluna 2 (Vazia)</p>
@@ -115,7 +128,12 @@ export function StaticTwoEqualColumns({
 
       return (
         <>
-          <div className="static-column w-[calc(50%-8px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[0]}% - ${gap / 2}px)`,
+            }}
+          >
             {column0LinkedNode && rest[column0LinkedNode] ? (
               rest[column0LinkedNode]
             ) : (
@@ -124,7 +142,12 @@ export function StaticTwoEqualColumns({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(50%-8px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[1]}% - ${gap / 2}px)`,
+            }}
+          >
             {column1LinkedNode && rest[column1LinkedNode] ? (
               rest[column1LinkedNode]
             ) : (
@@ -141,12 +164,22 @@ export function StaticTwoEqualColumns({
       children
     ) : (
       <>
-        <div className="static-column-placeholder w-[calc(50%-8px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[0]}% - ${gap / 2}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 1</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(50%-8px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[1]}% - ${gap / 2}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 2</p>
           </div>
@@ -191,6 +224,7 @@ export function StaticThreeEqualColumns({
   id,
   nodes,
   linkedNodes,
+  columnWidths = [33.33, 33.33, 33.34],
   ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
@@ -211,7 +245,12 @@ export function StaticThreeEqualColumns({
 
       return (
         <>
-          <div className="static-column w-[calc(33.33%-11px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[0]}% - ${(gap * 2) / 3}px)`,
+            }}
+          >
             {column0LinkedNode && rest[column0LinkedNode] ? (
               rest[column0LinkedNode]
             ) : (
@@ -220,7 +259,12 @@ export function StaticThreeEqualColumns({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(33.33%-11px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[1]}% - ${(gap * 2) / 3}px)`,
+            }}
+          >
             {column1LinkedNode && rest[column1LinkedNode] ? (
               rest[column1LinkedNode]
             ) : (
@@ -229,7 +273,12 @@ export function StaticThreeEqualColumns({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(33.33%-11px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[2]}% - ${(gap * 2) / 3}px)`,
+            }}
+          >
             {column2LinkedNode && rest[column2LinkedNode] ? (
               rest[column2LinkedNode]
             ) : (
@@ -246,17 +295,32 @@ export function StaticThreeEqualColumns({
       children
     ) : (
       <>
-        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[0]}% - ${(gap * 2) / 3}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 1</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[1]}% - ${(gap * 2) / 3}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 2</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[2]}% - ${(gap * 2) / 3}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 3</p>
           </div>
@@ -302,6 +366,7 @@ export function StaticSidebarMainLayout({
   id,
   nodes,
   linkedNodes,
+  columnWidths = [33.33, 66.67],
   ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
@@ -320,7 +385,12 @@ export function StaticSidebarMainLayout({
 
       return (
         <>
-          <div className="static-column w-[calc(33.33%-11px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[0]}% - ${gap / 2}px)`,
+            }}
+          >
             {column0LinkedNode && rest[column0LinkedNode] ? (
               rest[column0LinkedNode]
             ) : (
@@ -329,7 +399,12 @@ export function StaticSidebarMainLayout({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(66.67%-5px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[1]}% - ${gap / 2}px)`,
+            }}
+          >
             {column1LinkedNode && rest[column1LinkedNode] ? (
               rest[column1LinkedNode]
             ) : (
@@ -346,12 +421,22 @@ export function StaticSidebarMainLayout({
       children
     ) : (
       <>
-        <div className="static-column-placeholder w-[calc(33.33%-11px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[0]}% - ${gap / 2}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Sidebar</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(66.67%-5px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[1]}% - ${gap / 2}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Conteúdo Principal</p>
           </div>
@@ -397,6 +482,7 @@ export function StaticThreeColumnsWideCenter({
   id,
   nodes,
   linkedNodes,
+  columnWidths = [25, 50, 25],
   ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
@@ -417,7 +503,12 @@ export function StaticThreeColumnsWideCenter({
 
       return (
         <>
-          <div className="static-column w-[calc(25%-12px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[0]}% - ${(gap * 2) / 3}px)`,
+            }}
+          >
             {column0LinkedNode && rest[column0LinkedNode] ? (
               rest[column0LinkedNode]
             ) : (
@@ -426,7 +517,12 @@ export function StaticThreeColumnsWideCenter({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(50%-8px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[1]}% - ${(gap * 2) / 3}px)`,
+            }}
+          >
             {column1LinkedNode && rest[column1LinkedNode] ? (
               rest[column1LinkedNode]
             ) : (
@@ -435,7 +531,12 @@ export function StaticThreeColumnsWideCenter({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(25%-12px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[2]}% - ${(gap * 2) / 3}px)`,
+            }}
+          >
             {column2LinkedNode && rest[column2LinkedNode] ? (
               rest[column2LinkedNode]
             ) : (
@@ -452,17 +553,32 @@ export function StaticThreeColumnsWideCenter({
       children
     ) : (
       <>
-        <div className="static-column-placeholder w-[calc(25%-12px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[0]}% - ${(gap * 2) / 3}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 1</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(50%-8px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[1]}% - ${(gap * 2) / 3}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna Central</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(25%-12px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[2]}% - ${(gap * 2) / 3}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 3</p>
           </div>
@@ -508,6 +624,7 @@ export function StaticFourEqualColumns({
   id,
   nodes,
   linkedNodes,
+  columnWidths = [25, 25, 25, 25],
   ...rest
 }: ResponsiveLayoutProps) {
   if (hidden) return null;
@@ -530,7 +647,12 @@ export function StaticFourEqualColumns({
 
       return (
         <>
-          <div className="static-column w-[calc(25%-12px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[0]}% - ${(gap * 3) / 4}px)`,
+            }}
+          >
             {column0LinkedNode && rest[column0LinkedNode] ? (
               rest[column0LinkedNode]
             ) : (
@@ -539,7 +661,12 @@ export function StaticFourEqualColumns({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(25%-12px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[1]}% - ${(gap * 3) / 4}px)`,
+            }}
+          >
             {column1LinkedNode && rest[column1LinkedNode] ? (
               rest[column1LinkedNode]
             ) : (
@@ -548,7 +675,12 @@ export function StaticFourEqualColumns({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(25%-12px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[2]}% - ${(gap * 3) / 4}px)`,
+            }}
+          >
             {column2LinkedNode && rest[column2LinkedNode] ? (
               rest[column2LinkedNode]
             ) : (
@@ -557,7 +689,12 @@ export function StaticFourEqualColumns({
               </div>
             )}
           </div>
-          <div className="static-column w-[calc(25%-12px)]">
+          <div
+            className="static-column"
+            style={{
+              width: `calc(${columnWidths[3]}% - ${(gap * 3) / 4}px)`,
+            }}
+          >
             {column3LinkedNode && rest[column3LinkedNode] ? (
               rest[column3LinkedNode]
             ) : (
@@ -574,22 +711,42 @@ export function StaticFourEqualColumns({
       children
     ) : (
       <>
-        <div className="static-column-placeholder w-[calc(25%-12px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[0]}% - ${(gap * 3) / 4}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 1</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(25%-12px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[1]}% - ${(gap * 3) / 4}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 2</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(25%-12px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[2]}% - ${(gap * 3) / 4}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 3</p>
           </div>
         </div>
-        <div className="static-column-placeholder w-[calc(25%-12px)]">
+        <div
+          className="static-column-placeholder"
+          style={{
+            width: `calc(${columnWidths[3]}% - ${(gap * 3) / 4}px)`,
+          }}
+        >
           <div className="flex items-center justify-center h-full min-h-[100px] w-full border-2 border-dashed border-gray-300 rounded-md">
             <p className="text-sm text-gray-500">Coluna 4</p>
           </div>
