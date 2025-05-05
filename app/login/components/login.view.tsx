@@ -190,7 +190,7 @@ export function LoginView(props: any) {
             {workspaceInfo.workspace?.favicon_file?.url ? (
               <Image
                 className="w-[200px]"
-                src={workspaceInfo.workspace.favicon_file.url || "/placeholder.svg"}
+                src={workspaceInfo.workspace.favicon_file.url || "/placeholder.svg" || "/Logo.png"}
                 alt={`Logo de ${workspaceInfo.workspace.name || "empresa"}`}
                 width={200}
                 height={200}
