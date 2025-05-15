@@ -1,20 +1,266 @@
 "use client";
 
 import type React from "react";
-
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, AlertCircle, Info } from "lucide-react";
+import { motion, AnimatePresence, useAnimation, useInView } from "framer-motion";
+import { Loader2, AlertCircle, Eye, EyeOff, ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import Input from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Toaster } from "@/components/ui/toaster";
+
+// Animated background component
+const AnimatedBackground = ({ primaryColor, secondaryColor }: { primaryColor: string; secondaryColor: string }) => {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {/* Gradient background */}
+      <div
+        className="absolute inset-0 bg-gradient-to-br"
+        style={{
+          backgroundImage: `linear-gradient(to bottom right, ${primaryColor}, ${secondaryColor})`,
+        }}
+      />
+
+      {/* Animated circles with improved blur */}
+      <div className="absolute inset-0">
+        <svg className="w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="20" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          <circle cx="10%" cy="10%" r="80" fill="white" filter="url(#glow)">
+            <animate attributeName="cy" values="10%;15%;10%" dur="10s" repeatCount="indefinite" />
+            <animate attributeName="cx" values="10%;15%;10%" dur="12s" repeatCount="indefinite" />
+            <animate attributeName="r" values="80;120;80" dur="8s" repeatCount="indefinite" />
+          </circle>
+
+          <circle cx="80%" cy="20%" r="100" fill="white" filter="url(#glow)">
+            <animate attributeName="cy" values="20%;25%;20%" dur="14s" repeatCount="indefinite" />
+            <animate attributeName="cx" values="80%;75%;80%" dur="16s" repeatCount="indefinite" />
+            <animate attributeName="r" values="100;150;100" dur="10s" repeatCount="indefinite" />
+          </circle>
+
+          <circle cx="30%" cy="80%" r="90" fill="white" filter="url(#glow)">
+            <animate attributeName="cy" values="80%;75%;80%" dur="12s" repeatCount="indefinite" />
+            <animate attributeName="cx" values="30%;35%;30%" dur="14s" repeatCount="indefinite" />
+            <animate attributeName="r" values="90;130;90" dur="9s" repeatCount="indefinite" />
+          </circle>
+
+          <circle cx="90%" cy="90%" r="120" fill="white" filter="url(#glow)">
+            <animate attributeName="cy" values="90%;85%;90%" dur="16s" repeatCount="indefinite" />
+            <animate attributeName="cx" values="90%;85%;90%" dur="18s" repeatCount="indefinite" />
+            <animate attributeName="r" values="120;180;120" dur="11s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+      </div>
+
+      {/* Improved grid with more blur */}
+      <div
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, white 1px, transparent 1px),
+            linear-gradient(to bottom, white 1px, transparent 1px)
+          `,
+          backgroundSize: "80px 80px",
+          transform: "perspective(500px) rotateX(60deg)",
+          transformOrigin: "center bottom",
+          filter: "blur(1px)",
+        }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `radial-gradient(circle at center, white 1px, transparent 1px)`,
+            backgroundSize: "80px 80px",
+            animation: "gridMove 20s linear infinite",
+          }}
+        />
+      </div>
+
+      {/* Enhanced wave effect */}
+      <div className="absolute bottom-0 left-0 right-0 h-[40vh] overflow-hidden">
+        <svg className="absolute bottom-0 w-full h-full" viewBox="0 0 1440 320" preserveAspectRatio="none" style={{ filter: "blur(15px)" }}>
+          <path
+            fill="white"
+            fillOpacity="0.15"
+            d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          >
+            <animate
+              attributeName="d"
+              values="
+                M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                M0,160L48,181.3C96,203,192,245,288,261.3C384,277,480,267,576,240C672,213,768,171,864,165.3C960,160,1056,192,1152,197.3C1248,203,1344,181,1392,170.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z
+              "
+              dur="20s"
+              repeatCount="indefinite"
+            />
+          </path>
+          <path
+            fill="white"
+            fillOpacity="0.25"
+            d="M0,256L48,240C96,224,192,192,288,181.3C384,171,480,181,576,186.7C672,192,768,192,864,170.7C960,149,1056,107,1152,112C1248,117,1344,171,1392,197.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          >
+            <animate
+              attributeName="d"
+              values="
+                M0,256L48,240C96,224,192,192,288,181.3C384,171,480,181,576,186.7C672,192,768,192,864,170.7C960,149,1056,107,1152,112C1248,117,1344,171,1392,197.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                M0,224L48,213.3C96,203,192,181,288,154.7C384,128,480,96,576,106.7C672,117,768,171,864,197.3C960,224,1056,224,1152,208C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z;
+                M0,256L48,240C96,224,192,192,288,181.3C384,171,480,181,576,186.7C672,192,768,192,864,170.7C960,149,1056,107,1152,112C1248,117,1344,171,1392,197.3L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z
+              "
+              dur="15s"
+              repeatCount="indefinite"
+            />
+          </path>
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+// Animated card component
+const AnimatedCard = ({ children, isInView }: { children: React.ReactNode; isInView: boolean }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      className="w-full max-w-xl"
+    >
+      <Card className="border-none bg-white shadow-2xl overflow-hidden rounded-2xl">
+        <CardContent className="p-8">{children}</CardContent>
+      </Card>
+    </motion.div>
+  );
+};
+
+// Animated button component
+const AnimatedButton = ({
+  children,
+  onClick,
+  disabled,
+  className,
+  style,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}) => {
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      className={`w-full h-12 rounded-md text-white font-medium relative overflow-hidden ${className}`}
+      style={style}
+      whileHover={{
+        scale: 1.01,
+        filter: "brightness(1.1)",
+      }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    >
+      <div className="relative z-10 flex items-center justify-center">{children}</div>
+    </motion.button>
+  );
+};
+
+// Social login button component
+const SocialButton = ({ icon, label, onClick, disabled }: { icon: React.ReactNode; label: string; onClick?: () => void; disabled?: boolean }) => {
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full h-12 relative overflow-hidden group rounded-md border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center"
+      whileHover={{ y: -2, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)" }}
+      whileTap={{ y: 0, boxShadow: "0 0 0 0 rgba(0, 0, 0, 0.1)" }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    >
+      <div className="flex items-center justify-center">
+        {icon}
+        <span className="text-gray-700">{label}</span>
+      </div>
+    </motion.button>
+  );
+};
+
+// Input field component
+const InputField = ({
+  id,
+  type,
+  label,
+  placeholder,
+  register,
+  error,
+  disabled,
+  primaryColor,
+  icon,
+  rightIcon,
+  onRightIconClick,
+}: {
+  id: string;
+  type: string;
+  label: string;
+  placeholder: string;
+  register: any;
+  error?: string;
+  disabled?: boolean;
+  primaryColor: string;
+  icon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  onRightIconClick?: () => void;
+}) => {
+  return (
+    <div className="space-y-1">
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700">
+        {label}
+      </label>
+      <div className="relative">
+        {icon && <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</div>}
+        <Input
+          id={id}
+          type={type}
+          placeholder={placeholder}
+          disabled={disabled}
+          {...register}
+          className={`h-12 rounded-md border-0 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all ${
+            icon ? "pl-10" : "px-4"
+          }`}
+          style={
+            {
+              "--tw-ring-color": `${primaryColor}80`,
+            } as React.CSSProperties
+          }
+        />
+        {rightIcon && (
+          <button type="button" onClick={onRightIconClick} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            {rightIcon}
+          </button>
+        )}
+      </div>
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -5, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            exit={{ opacity: 0, y: -5, height: 0 }}
+            className="text-sm text-red-500 mt-1"
+          >
+            {error}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export function LoginView(props: any) {
   const {
@@ -38,42 +284,64 @@ export function LoginView(props: any) {
   } = props;
 
   const [rememberMe, setRememberMe] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const buttonStyle = workspaceInfo.theme
-    ? {
-        backgroundColor: workspaceInfo.theme.color_primary_hex,
-        color: "#FFFFFF",
-        "&:hover": {
-          backgroundColor: adjustColor(workspaceInfo.theme.color_primary_hex, -20),
-        },
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: false });
+  const controls = useAnimation();
+
+  useEffect(() => {
+    if (isInView) {
+      controls.start("visible");
+    }
+  }, [controls, isInView]);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Usar as cores do workspace quando disponíveis
+  const primaryColor = workspaceInfo.theme?.color_primary_hex || "#104a74";
+  const secondaryColor = workspaceInfo.theme?.color_second_hex || "#1071a0";
+  const backgroundColor = workspaceInfo.theme?.color_background || "#FFFFFF";
+  const textColor = workspaceInfo.theme?.color_text || "#1F2937";
+
+  // Adicionar estilos CSS para animação do grid
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes gridMove {
+        0% {
+          transform: translateY(0);
+        }
+        100% {
+          transform: translateY(80px);
+        }
       }
-    : {};
-
-  function adjustColor(hex: string, percent: number) {
-    let r = Number.parseInt(hex.slice(1, 3), 16);
-    let g = Number.parseInt(hex.slice(3, 5), 16);
-    let b = Number.parseInt(hex.slice(5, 7), 16);
-
-    r = Math.max(0, Math.min(255, r + percent));
-    g = Math.max(0, Math.min(255, g + percent));
-    b = Math.max(0, Math.min(255, b + percent));
-
-    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
-  }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   return (
-    <div
-      className="flex bg-background overflow-hidden h-screen"
-      style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_background } : {}}
-    >
+    <div className="flex min-h-screen overflow-hidden relative">
+      {/* Animated background */}
+      <AnimatedBackground primaryColor={primaryColor} secondaryColor={secondaryColor} />
+
+      {/* Redirecting overlay */}
       <AnimatePresence>
         {isRedirecting && (
           <motion.div
-            className="fixed inset-0 bg-background/60 backdrop-blur-md z-50 flex flex-col items-center justify-center"
+            className="fixed inset-0 backdrop-blur-md z-50 flex flex-col items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 }}
+            style={{ backgroundColor: `${backgroundColor}80` }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -112,26 +380,25 @@ export function LoginView(props: any) {
                     ease: "linear",
                   }}
                 >
-                  <Loader2 className="h-10 w-10" style={{ color: workspaceInfo.theme?.color_primary_hex || "hsl(221.2 83.2% 53.3%)" }} />
+                  <Loader2 className="h-10 w-10 text-white" />
                 </motion.div>
 
                 <motion.div
                   className="absolute inset-0 rounded-full blur-xl -z-10"
-                  style={{ backgroundColor: workspaceInfo.theme?.color_primary_hex || "hsl(221.2 83.2% 53.3%)" }}
+                  style={{ backgroundColor: "#ffffff" }}
                   animate={{ opacity: [0.2, 0.4, 0.2] }}
                   transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}
                 />
               </div>
 
               <motion.div
-                className="w-48 h-[2px] bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-6 mx-auto"
+                className="w-48 h-[2px] rounded-full overflow-hidden mb-6 mx-auto bg-white/20"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
                 <motion.div
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: workspaceInfo.theme?.color_primary_hex || "hsl(221.2 83.2% 53.3%)" }}
+                  className="h-full rounded-full bg-white"
                   initial={{ width: "0%" }}
                   animate={{
                     width: ["0%", "100%"],
@@ -146,426 +413,343 @@ export function LoginView(props: any) {
               </motion.div>
 
               <motion.p
-                className="text-center text-sm font-medium"
+                className="text-center text-sm font-medium text-white"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                style={{ color: workspaceInfo.theme?.color_text || "inherit" }}
               >
-                Redirecionando
+                Redirecionando para sua área de trabalho
               </motion.p>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Access request modal */}
       <AnimatePresence>
         {showAccessRequest && (
           <motion.div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
+            className="fixed inset-0 backdrop-blur-sm z-50 flex flex-col items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
+            style={{ backgroundColor: `${backgroundColor}80` }}
           >
-            <Card className="max-w-md w-full">
-              <CardHeader>
-                <div className="flex justify-center mb-2">
-                  <AlertCircle className="h-12 w-12 text-amber-500" />
-                </div>
-                <CardTitle className="text-center">Acesso Pendente</CardTitle>
-                <CardDescription className="text-center">Sua conta foi criada, mas você ainda não tem acesso a nenhum workspace.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-muted-foreground">Entre em contato com o administrador do seu tenant para solicitar acesso.</p>
-              </CardContent>
-              <CardFooter className="flex justify-center">
-                <Button onClick={() => setShowAccessRequest(false)}>Voltar para o login</Button>
-              </CardFooter>
-            </Card>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            >
+              <Card className="max-w-md w-full border-none shadow-2xl">
+                <CardContent className="p-6">
+                  <div className="flex justify-center mb-2">
+                    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.2, type: "spring" }}>
+                      <AlertCircle className="h-12 w-12 text-amber-500" />
+                    </motion.div>
+                  </div>
+                  <h2 className="text-xl font-semibold text-center">Acesso Pendente</h2>
+                  <p className="text-sm text-center text-gray-500 mt-2">Sua conta foi criada, mas você ainda não tem acesso a nenhum workspace.</p>
+                  <p className="text-center text-sm text-gray-500 mt-4 mb-6">
+                    Entre em contato com o administrador do seu tenant para solicitar acesso.
+                  </p>
+                  <div className="flex justify-center">
+                    <AnimatedButton onClick={() => setShowAccessRequest(false)} style={{ backgroundColor: primaryColor }} className="max-w-xs">
+                      Voltar para o login
+                    </AnimatedButton>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="flex flex-col justify-center px-4 py-12 sm:px-6 lg:flex-none lg:px-20 xl:px-24 w-full lg:w-1/2">
-        <div className="mx-auto w-full">
-          <motion.div className="mb-8" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            {workspaceInfo.workspace?.favicon_file?.url ? (
-              <Image
-                className="w-[200px]"
-                src={workspaceInfo.workspace.favicon_file.url || "/placeholder.svg" || "/Logo.png"}
-                alt={`Logo de ${workspaceInfo.workspace.name || "empresa"}`}
-                width={200}
-                height={200}
-              />
-            ) : (
-              <Image className="w-[200px]" src="/Logo.png" alt="Logo da empresa" width={200} height={200} />
-            )}
-          </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <h2 className="text-3xl font-bold tracking-tight" style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}>
-              {step === 0 ? "Entrar na plataforma" : "Recuperar senha"}
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {step === 0 ? "Acesse sua conta para continuar" : "Informe seu email para receber instruções de recuperação"}
+      {/* Main content - Centered Card */}
+      <div className="flex w-full items-center justify-center p-6 relative z-10" ref={ref}>
+        <AnimatedCard isInView={isInView}>
+          <div className="flex justify-center mb-6">
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
+              className="relative"
+            >
+              {workspaceInfo.workspace?.favicon_file?.url ? (
+                <Image
+                  src={workspaceInfo.workspace.favicon_file.url || "/placeholder.svg"}
+                  alt={`Logo de ${workspaceInfo.workspace.name || "empresa"}`}
+                  width={120}
+                  height={120}
+                  className="h-[80px] w-auto object-contain"
+                />
+              ) : (
+                <Image src="/Logo.png" alt="Logo da empresa" width={200} height={200} className="h-[80px] w-auto object-cover" />
+              )}
+            </motion.div>
+          </div>
+
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <h1 className="text-2xl font-bold text-center">{step === 0 ? "Bem vindo(a)" : "Recuperar senha"}</h1>
+            <p className="text-sm text-center text-gray-500 mb-6">
+              {step === 0
+                ? "Faça login para acessar sua conta e navegar pelo seu espaço de trabalho."
+                : "Digite o email associado à sua conta para receber um link de recuperação."}
             </p>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="mt-6">
-            <Alert variant="default" className="bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
-              <Info className="h-4 w-4 text-blue-500" />
-              <AlertTitle>Acesso restrito</AlertTitle>
-              <AlertDescription>
-                Para acessar esta plataforma, você precisa de uma conta autorizada. Se você não tem acesso, entre em contato com o administrador do
-                seu tenant.
-              </AlertDescription>
-            </Alert>
-          </motion.div>
-
-          <AnimatePresence mode="wait">
-            {step === 0 && (
-              <motion.div
-                className="mt-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                key="social-login"
-              >
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={handleGoogleLogin}
-                    disabled={isLoading}
-                    className="w-full hover:text-white"
-                    style={{
-                      borderColor: workspaceInfo.theme?.color_primary_hex,
-                      color: workspaceInfo.theme?.color_primary_hex,
-                    }}
-                  >
-                    <svg className="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-                      <path
-                        fill="#EA4335"
-                        d="M24 9.5c3.69 0 6.29 1.58 7.74 2.91l5.65-5.65C34.18 4.14 29.62 2 24 2 14.92 2 7.4 7.95 4.77 16.24l6.63 5.13C12.69 15.36 17.86 9.5 24 9.5z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M46.55 24.48c0-1.4-.12-2.41-.37-3.47H24v7h12.66c-.54 3.04-2.47 5.63-5.46 7.39l6.68 5.16c3.92-3.63 6.22-8.98 6.22-15.08z"
-                      />
-                      <path
-                        fill="#4A90E2"
-                        d="M11.4 28.19c-.88-2.64-1.4-5.46-1.4-8.19s.52-5.55 1.4-8.19L4.77 6.76C1.77 11.47 0 17.38 0 24s1.77 12.53 4.77 17.24l6.63-5.05z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M24 46c5.86 0 10.78-1.92 14.37-5.21L31.8 35.62C30.11 36.65 27.77 37 24 37c-6.14 0-11.31-5.36-12.6-12.48L4.77 30.05C7.4 40.05 14.92 46 24 46z"
-                      />
-                    </svg>
-                    <span style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}>Google</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    disabled={isLoading}
-                    className="w-full hover:text-white"
-                    style={{
-                      borderColor: workspaceInfo.theme?.color_primary_hex,
-                      color: workspaceInfo.theme?.color_primary_hex,
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-4 w-4" viewBox="0 0 48 48">
-                      <path fill="#F25022" d="M22 22H3V3h19v19z" />
-                      <path fill="#00A4EF" d="M45 22H26V3h19v19z" />
-                      <path fill="#7FBA00" d="M45 45H26V26h19v19z" />
-                      <path fill="#FFB900" d="M22 45H3V26h19v19z" />
-                    </svg>
-                    <span style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}>Microsoft</span>
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <div className="relative mt-6">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_second_hex } : {}} />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span
-                className="bg-background px-2 text-muted-foreground"
-                style={
-                  workspaceInfo.theme
-                    ? {
-                        backgroundColor: workspaceInfo.theme.color_background,
-                        color: workspaceInfo.theme.color_text,
-                      }
-                    : {}
-                }
-              >
-                ou continue com
-              </span>
-            </div>
-          </div>
-
           {error && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="mb-4">
+              <Alert variant="destructive" className="border-red-200 bg-red-50 dark:bg-red-900/30 dark:border-red-800">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </motion.div>
           )}
 
           <AnimatePresence mode="wait">
             {step === 0 ? (
-              <motion.form
+              <motion.div
                 key="login-form"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                onSubmit={handleSubmitLogin(handleLogin)}
-                className="space-y-4 mt-6"
+                className="space-y-4"
               >
-                <div className="space-y-2">
-                  <Label htmlFor="email" style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}>
-                    Email
-                  </Label>
-                  <Input
+                {/* Social login buttons */}
+                <div className="flex flex-col space-y-3">
+                  <SocialButton
+                    icon={
+                      <svg className="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                        <path
+                          fill="#EA4335"
+                          d="M24 9.5c3.69 0 6.29 1.58 7.74 2.91l5.65-5.65C34.18 4.14 29.62 2 24 2 14.92 2 7.4 7.95 4.77 16.24l6.63 5.13C12.69 15.36 17.86 9.5 24 9.5z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M46.55 24.48c0-1.4-.12-2.41-.37-3.47H24v7h12.66c-.54 3.04-2.47 5.63-5.46 7.39l6.68 5.16c3.92-3.63 6.22-8.98 6.22-15.08z"
+                        />
+                        <path
+                          fill="#4A90E2"
+                          d="M11.4 28.19c-.88-2.64-1.4-5.46-1.4-8.19s.52-5.55 1.4-8.19L4.77 6.76C1.77 11.47 0 17.38 0 24s1.77 12.53 4.77 17.24l6.63-5.05z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M24 46c5.86 0 10.78-1.92 14.37-5.21L31.8 35.62C30.11 36.65 27.77 37 24 37c-6.14 0-11.31-5.36-12.6-12.48L4.77 30.05C7.4 40.05 14.92 46 24 46z"
+                        />
+                      </svg>
+                    }
+                    label="Entrar com o Google"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                  />
+
+                  <SocialButton
+                    icon={
+                      <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 h-5 w-5" viewBox="0 0 48 48">
+                        <path fill="#F25022" d="M22 22H3V3h19v19z" />
+                        <path fill="#00A4EF" d="M45 22H26V3h19v19z" />
+                        <path fill="#7FBA00" d="M45 45H26V26h19v19z" />
+                        <path fill="#FFB900" d="M22 45H3V26h19v19z" />
+                      </svg>
+                    }
+                    label="Entrar com Microsoft"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                {/* Divider line with animation */}
+                <motion.div
+                  className="relative flex items-center py-2"
+                  initial={{ opacity: 0, scaleX: 0.8 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <div className="flex-grow border-t border-gray-200"></div>
+                  <span className="flex-shrink mx-4 text-gray-400 text-sm">ou</span>
+                  <div className="flex-grow border-t border-gray-200"></div>
+                </motion.div>
+
+                {/* Email login form */}
+                <div className="space-y-4">
+                  <InputField
                     id="email"
                     type="email"
-                    placeholder="seu@email.com"
-                    autoComplete="email"
+                    label="Email"
+                    placeholder="nome@exemplo.com"
+                    register={loginRegister("email")}
+                    error={loginErrors.email ? String(loginErrors.email.message) : undefined}
                     disabled={isLoading}
-                    {...loginRegister("email")}
-                    className="focus-visible:ring-1 transition-all"
-                    style={
-                      workspaceInfo.theme
-                        ? ({
-                            borderColor: workspaceInfo.theme.color_second_hex,
-                            "--tw-ring-color": workspaceInfo.theme.color_primary_hex,
-                          } as React.CSSProperties)
-                        : {}
+                    primaryColor={primaryColor}
+                    icon={
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
                     }
                   />
-                  {loginErrors.email && <p className="text-sm text-destructive mt-1">{String(loginErrors.email.message)}</p>}
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}>
-                      Senha
-                    </Label>
-                    <Button
-                      variant="link"
-                      className="px-0 font-normal text-xs"
-                      onClick={() => setStep(1)}
-                      type="button"
-                      style={
-                        workspaceInfo.theme
-                          ? {
-                              color: workspaceInfo.theme.color_primary_hex,
-                              textDecoration: "none",
-                            }
-                          : {}
-                      }
-                    >
-                      Esqueceu a senha?
-                    </Button>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                        Password
+                      </label>
+                      <Button
+                        variant="link"
+                        className="px-0 h-auto font-normal text-xs"
+                        onClick={() => setStep(1)}
+                        type="button"
+                        style={{ color: primaryColor }}
+                      >
+                        Esqueceu a senha?
+                      </Button>
+                    </div>
+
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                      </div>
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••••••"
+                        autoComplete="current-password"
+                        disabled={isLoading}
+                        {...loginRegister("password")}
+                        className="h-12 rounded-md border-0 bg-gray-100 pl-10 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-all"
+                        style={
+                          {
+                            "--tw-ring-color": `${primaryColor}80`,
+                          } as React.CSSProperties
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+
+                    <AnimatePresence>
+                      {loginErrors.password && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5, height: 0 }}
+                          animate={{ opacity: 1, y: 0, height: "auto" }}
+                          exit={{ opacity: 0, y: -5, height: 0 }}
+                          className="text-sm text-red-500 mt-1"
+                        >
+                          {String(loginErrors.password.message)}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                    {...loginRegister("password")}
-                    className="focus-visible:ring-1 transition-all"
-                    style={
-                      workspaceInfo.theme
-                        ? ({
-                            borderColor: workspaceInfo.theme.color_second_hex,
-                            "--tw-ring-color": workspaceInfo.theme.color_primary_hex,
-                          } as React.CSSProperties)
-                        : {}
-                    }
-                  />
-                  {loginErrors.password && <p className="text-sm text-destructive mt-1">{String(loginErrors.password.message)}</p>}
-                </div>
 
-                <div className="flex justify-end">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="remember"
-                      checked={rememberMe}
-                      onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                      style={
-                        workspaceInfo.theme
-                          ? {
-                              borderColor: workspaceInfo.theme.color_second_hex,
-                              accentColor: workspaceInfo.theme.color_primary_hex,
-                            }
-                          : {}
-                      }
-                    />
-                    <Label
-                      htmlFor="remember"
-                      className="text-sm font-normal"
-                      style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}
+                  <div className="flex justify-center items-center mt-5">
+                    <AnimatedButton
+                      onClick={handleSubmitLogin(handleLogin)}
+                      style={{ backgroundColor: primaryColor }}
+                      disabled={isLoading}
+                      className="w-full flex justify-center items-center"
                     >
-                      Lembrar de mim
-                    </Label>
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <span>Entrando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Entrar</span>
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </>
+                      )}
+                    </AnimatedButton>
                   </div>
                 </div>
-
-                <div className="pt-2">
-                  <Button
-                    type="submit"
-                    className="w-full hover:opacity-90 transition-opacity"
-                    disabled={isLoading}
-                    style={
-                      workspaceInfo.theme
-                        ? {
-                            backgroundColor: workspaceInfo.theme.color_primary_hex,
-                            color: "#FFFFFF",
-                          }
-                        : {}
-                    }
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        <span>Entrando...</span>
-                      </>
-                    ) : (
-                      <span>Entrar</span>
-                    )}
-                  </Button>
-                </div>
-              </motion.form>
+              </motion.div>
             ) : (
-              <motion.form
+              <motion.div
                 key="reset-form"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
-                onSubmit={handleSubmitReset(handleForgotPassword)}
-                className="space-y-4 mt-6"
+                className="space-y-4"
               >
-                <div className="space-y-2">
-                  <Label htmlFor="emailToReset" style={workspaceInfo.theme ? { color: workspaceInfo.theme.color_text } : {}}>
-                    Email
-                  </Label>
-                  <Input
-                    id="emailToReset"
-                    type="email"
-                    placeholder="seu@email.com"
-                    disabled={isLoading}
-                    {...resetRegister("emailToReset")}
-                    className="focus-visible:ring-1 transition-all"
-                    style={
-                      workspaceInfo.theme
-                        ? ({
-                            borderColor: workspaceInfo.theme.color_second_hex,
-                            "--tw-ring-color": workspaceInfo.theme.color_primary_hex,
-                          } as React.CSSProperties)
-                        : {}
-                    }
-                  />
-                  {resetErrors.emailToReset && <p className="text-sm text-destructive mt-1">{String(resetErrors.emailToReset.message)}</p>}
-                </div>
+                <InputField
+                  id="emailToReset"
+                  type="email"
+                  label="Email"
+                  placeholder="nome@exemplo.com"
+                  register={resetRegister("emailToReset")}
+                  error={resetErrors.emailToReset ? String(resetErrors.emailToReset.message) : undefined}
+                  disabled={isLoading}
+                  primaryColor={primaryColor}
+                  icon={
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                  }
+                />
 
-                <div className="pt-2">
-                  <Button
-                    type="submit"
-                    className="w-full hover:opacity-90 transition-opacity"
-                    disabled={isLoading}
-                    style={
-                      workspaceInfo.theme
-                        ? {
-                            backgroundColor: workspaceInfo.theme.color_primary_hex,
-                            color: "#FFFFFF",
-                          }
-                        : {}
-                    }
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        <span>Enviando...</span>
-                      </>
-                    ) : (
+                <AnimatedButton onClick={handleSubmitReset(handleForgotPassword)} style={{ backgroundColor: primaryColor }} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <span>Enviando...</span>
+                    </>
+                  ) : (
+                    <>
                       <span>Enviar instruções</span>
-                    )}
-                  </Button>
-                </div>
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </AnimatedButton>
 
                 <div className="text-center text-sm">
-                  <Button
-                    variant="link"
-                    className="p-0 font-normal"
-                    onClick={() => setStep(0)}
-                    type="button"
-                    style={
-                      workspaceInfo.theme
-                        ? {
-                            color: workspaceInfo.theme.color_primary_hex,
-                            textDecoration: "none",
-                          }
-                        : {}
-                    }
-                  >
+                  <Button variant="link" className="p-0 h-auto font-normal" onClick={() => setStep(0)} type="button" style={{ color: primaryColor }}>
                     Voltar para o login
                   </Button>
                 </div>
-              </motion.form>
+              </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </div>
-      <div className="relative hidden lg:block lg:w-1/2">
-        <motion.div
-          className="h-full flex items-center justify-center bg-muted m-10 rounded-xl overflow-hidden"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
-          style={workspaceInfo.theme ? { backgroundColor: workspaceInfo.theme.color_second_hex + "33" } : {}} // Adding 33 for opacity
-        >
-          <div className="flex flex-col items-center justify-center p-8">
-            <motion.h1
-              className="text-5xl font-bold text-center mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.5 }}
-              style={
-                workspaceInfo.theme
-                  ? {
-                      color: workspaceInfo.theme.color_text,
-                    }
-                  : {}
-              }
-            >
-              {workspaceInfo.workspace?.name ? `Bem-vindo ao ${workspaceInfo.workspace.name}` : "Bem-vindo à sua plataforma de trabalho"}
-            </motion.h1>
-
-            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.7, delay: 0.8 }}>
-              {workspaceInfo.workspace?.thumbnail?.url ? (
-                <Image
-                  className="object-cover w-4/5 mx-auto rounded-lg shadow-lg"
-                  src={workspaceInfo.workspace.thumbnail.url || "/placeholder.svg"}
-                  alt={`Imagem de ${workspaceInfo.workspace.name || "destaque"}`}
-                  width={1920}
-                  height={1080}
-                />
-              ) : (
-                <Image
-                  className="object-cover w-4/5 mx-auto"
-                  src="/LoginHero.png"
-                  alt="Imagem ilustrativa da plataforma"
-                  width={1920}
-                  height={1080}
-                />
-              )}
-            </motion.div>
-          </div>
-        </motion.div>
+        </AnimatedCard>
       </div>
       <Toaster />
     </div>

@@ -28,18 +28,14 @@ export default function LoginLoadingElegant({ workspaceInfo }: LoadingProps) {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="flex flex-col items-center">
         {/* Logo */}
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }} className="mb-16 relative">
-          {/* Subtle glow behind logo */}
-          <motion.div
-            className="absolute -inset-6 rounded-full blur-2xl -z-10"
-            style={{ backgroundColor: primaryColor }}
-            animate={{ opacity: [0.1, 0.15, 0.1] }}
-            transition={{ duration: 3, repeat: Number.POSITIVE_INFINITY }}
-          />
-
           {logoUrl ? (
-            <Image src={logoUrl || "/placeholder.svg"} alt="Logo" width={90} height={90} className="w-[90px] h-auto" />
+            <motion.div animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}>
+              <Image src={logoUrl || "/placeholder.svg"} alt="Logo" width={90} height={90} className="w-[90px] h-auto" />
+            </motion.div>
           ) : (
-            <Image src="/Logo.png" alt="Logo" width={90} height={90} className="w-[90px] h-auto" />
+            <motion.div animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}>
+              <Image src="/Logo.png" alt="Logo" width={90} height={90} className="w-[90px] h-auto" />
+            </motion.div>
           )}
         </motion.div>
 
