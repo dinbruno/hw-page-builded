@@ -6,7 +6,6 @@ import { motion } from "framer-motion";
 
 const StaticBanner = dynamic(() => import("./components/static-banner"));
 const StaticParagraph = dynamic(() => import("./components/static-paragraph"));
-const StaticCalendar = dynamic(() => import("./components/static-calendar"));
 const StaticBirthdayList = dynamic(() => import("./components/static-birthday-list"));
 const StaticButton = dynamic(() => import("./components/static-button"));
 const StaticCollaboratorsList = dynamic(() => import("./components/static-collaborators-list"));
@@ -18,7 +17,6 @@ const StaticDocumentsList = dynamic(() => import("./components/static-documents-
 const StaticHeader = dynamic(() => import("./components/static-header"));
 const StaticKanbanBoard = dynamic(() => import("./components/static-kanban-board"));
 const StaticTable = dynamic(() => import("./components/static-table"));
-const StaticProductCarousel = dynamic(() => import("./components/static-product-carousel"));
 const StaticProductCard = dynamic(() => import("./components/static-product-card"));
 const StaticHeroCarousel = dynamic(() => import("./components/static-hero-carousel"));
 const StaticText = dynamic(() => import("./components/static-text"));
@@ -28,6 +26,7 @@ const StaticGridLayout = dynamic(() => import("./components/static-grid-layout")
 const StaticFooter = dynamic(() => import("./components/static-footer"));
 const StaticContentBlock = dynamic(() => import("./components/static-content-block"));
 const StaticNavigationBar = dynamic(() => import("./components/static-navigation-bar"));
+const StaticCalendar = dynamic(() => import("./components/static-calendar"));
 
 import {
   StaticTwoEqualColumns,
@@ -35,6 +34,7 @@ import {
   StaticSidebarMainLayout,
   StaticThreeColumnsWideCenter,
 } from "./components/static-responsive-layouts";
+import { StaticCardCarousel, StaticCardGrid, StaticEnhancedImageGallery, StaticGalleryTemplate, StaticRichText, StaticVideo } from "./components";
 
 const componentMap: Record<string, any> = {
   Banner: StaticBanner,
@@ -55,7 +55,6 @@ const componentMap: Record<string, any> = {
   Header: StaticHeader,
   KanbanBoard: StaticKanbanBoard,
   DynamicTable: StaticTable,
-  ProductCarousel: StaticProductCarousel,
   ProductCard: StaticProductCard,
   HeroSection: StaticHeroCarousel,
   Text: StaticText,
@@ -65,6 +64,12 @@ const componentMap: Record<string, any> = {
   Footer: StaticFooter,
   ContentBlock: StaticContentBlock,
   NavigationBar: StaticNavigationBar,
+  Video: StaticVideo,
+  RichText: StaticRichText,
+  EnhancedImageGallery: StaticEnhancedImageGallery,
+  GalleryTemplate: StaticGalleryTemplate,
+  CardGrid: StaticCardGrid,
+  CardCarousel: StaticCardCarousel,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {

@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Facebook, Github, Instagram, Linkedin, Mail, MapPin, Phone, Twitter, Youtube } from "lucide-react";
 
-// Interfaces for data types
+// Interfaces para os tipos de dados
 interface FooterLink {
   id: string;
   text: string;
@@ -117,7 +117,7 @@ interface StaticFooterProps {
   style?: React.CSSProperties;
 }
 
-// Default values
+// Valores padrão
 const defaultColumns: FooterColumn[] = [
   {
     id: "col1",
@@ -177,7 +177,7 @@ const defaultAnimation: AnimationValue = {
   type: "none",
   duration: 500,
   delay: 0,
-  easing: "ease",
+  easing: "linear",
   repeat: 0,
 };
 
@@ -239,25 +239,10 @@ export default function StaticFooter({
 }: StaticFooterProps) {
   if (hidden) return null;
 
-  console.log("[StaticFooter] Rendering with props:", {
-    layout,
-    backgroundColor,
-    textColor,
-    accentColor,
-    showLogo,
-    showCopyright,
-    showSocialLinks,
-    showContactInfo,
-    showNewsletter,
-    margin,
-    padding,
-    border,
-  });
-
-  // Helper function to convert hex to rgb
+  // Função auxiliar para converter hex para rgb
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : "0, 0, 0";
+    return result ? `${Number.parseInt(result[1], 16)}, ${Number.parseInt(result[2], 16)}, ${Number.parseInt(result[3], 16)}` : "0, 0, 0";
   };
 
   const getBackgroundStyle = () => {
@@ -277,12 +262,6 @@ export default function StaticFooter({
         backgroundRepeat: background.image.repeat,
       };
     } else if (background?.type === "gradient" && background.gradient) {
-      console.log("[StaticFooter] Applying gradient background:", {
-        type: background.gradient.type,
-        angle: background.gradient.angle,
-        colors: background.gradient.colors,
-      });
-
       const gradientType =
         background.gradient.type === "linear"
           ? `linear-gradient(${background.gradient.angle}deg, ${background.gradient.colors.map((c) => `${c.color} ${c.position}%`).join(", ")})`
@@ -312,13 +291,12 @@ export default function StaticFooter({
     borderWidth: border && border.width > 0 ? `${border.width}px` : "0",
     borderStyle: border?.style || "solid",
     borderColor: border?.color || "#000000",
-    borderTopLeftRadius: `${border?.radius?.topLeft || 0}px`,
-    borderTopRightRadius: `${border?.radius?.topRight || 0}px`,
-    borderBottomRightRadius: `${border?.radius?.bottomRight || 0}px`,
-    borderBottomLeftRadius: `${border?.radius?.bottomLeft || 0}px`,
+    borderRadius: border?.radius
+      ? `${border.radius.topLeft}px ${border.radius.topRight}px ${border.radius.bottomRight}px ${border.radius.bottomLeft}px`
+      : "0px",
   };
 
-  // Set up animations with Framer Motion
+  // Configurar animações com Framer Motion
   const getAnimationProps = () => {
     if (!animation || animation.type === "none") {
       return {
@@ -333,7 +311,7 @@ export default function StaticFooter({
       transition: {
         duration: (animation?.duration || 500) / 1000,
         delay: (animation?.delay || 0) / 1000,
-        ease: animation?.easing || "ease",
+        ease: animation?.easing || "linear",
         repeat: animation?.repeat || 0,
         repeatType: "loop" as const,
       },
@@ -378,7 +356,7 @@ export default function StaticFooter({
     }
   };
 
-  // Render the correct social icon
+  // Renderizar o ícone social correto
   const renderSocialIcon = (type: string) => {
     switch (type) {
       case "facebook":
@@ -398,10 +376,8 @@ export default function StaticFooter({
     }
   };
 
-  // Render the footer layout based on the selected type
+  // Renderizar o layout do footer com base no tipo selecionado
   const renderFooterLayout = () => {
-    console.log("Current footer layout:", layout);
-
     switch (layout) {
       case "simple":
         return renderSimpleFooter();
@@ -418,7 +394,7 @@ export default function StaticFooter({
     }
   };
 
-  // Simple Layout
+  // Layout Simples
   const renderSimpleFooter = () => {
     return (
       <div className="container mx-auto px-4">
@@ -438,12 +414,12 @@ export default function StaticFooter({
           </div>
 
           {showSocialLinks && (
-            <div className="flex space-x-4">
+            <div className="flex space-x-2 mt-3">
               {socialLinks.map((link) => (
                 <a
                   key={link.id}
                   href={link.url}
-                  className="hover:opacity-80 transition-opacity"
+                  className="hover:opacity-80 transition-opacity mx-1"
                   style={{ color: accentColor }}
                   aria-label={enableAccessibility ? `Visite nosso ${link.type}` : undefined}
                 >
@@ -463,7 +439,7 @@ export default function StaticFooter({
     );
   };
 
-  // Columns Layout
+  // Layout com Colunas
   const renderColumnsFooter = () => {
     return (
       <div className="container mx-auto px-4">
@@ -488,12 +464,12 @@ export default function StaticFooter({
             </div>
 
             {showSocialLinks && (
-              <div className="flex flex-wrap space-x-4 mt-4">
+              <div className="flex space-x-2 mt-4">
                 {socialLinks.map((link) => (
                   <a
                     key={link.id}
                     href={link.url}
-                    className="hover:opacity-80 transition-opacity mb-2"
+                    className="hover:opacity-80 transition-opacity mx-1"
                     style={{ color: accentColor }}
                     aria-label={enableAccessibility ? `Visite nosso ${link.type}` : undefined}
                   >
@@ -506,24 +482,28 @@ export default function StaticFooter({
 
           {columns.map((column) => (
             <div key={column.id} className="col-span-1">
-              <h3 className="font-semibold text-lg mb-4" style={{ color: textColor }}>
-                {column.title}
-              </h3>
-              <ul className="space-y-2">
-                {column.links.map((link) => (
-                  <li key={link.id}>
-                    <a
-                      href={link.url}
-                      className="hover:underline transition-all"
-                      style={{ color: textColor, opacity: 0.8 }}
-                      onMouseOver={(e) => (e.currentTarget.style.opacity = "1")}
-                      onMouseOut={(e) => (e.currentTarget.style.opacity = "0.8")}
-                    >
-                      {link.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {column.links && column.links.length > 0 && (
+                <>
+                  <h3 className="font-semibold text-lg mb-4" style={{ color: textColor }}>
+                    {column.title}
+                  </h3>
+                  <ul className="space-y-2">
+                    {column.links.map((link) => (
+                      <li key={link.id}>
+                        <a
+                          href={link.url}
+                          className="hover:underline transition-all"
+                          style={{ color: textColor, opacity: 0.8 }}
+                          onMouseOver={(e) => (e.currentTarget.style.opacity = "1")}
+                          onMouseOut={(e) => (e.currentTarget.style.opacity = "0.8")}
+                        >
+                          {link.text}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -537,8 +517,11 @@ export default function StaticFooter({
     );
   };
 
-  // Centered Layout
+  // Layout Centralizado
   const renderCenteredFooter = () => {
+    // Filtrar apenas colunas com links para exibição
+    const validLinks = columns.flatMap((column) => (column.links && column.links.length > 0 ? column.links : []));
+
     return (
       <div className="container mx-auto px-4 text-center">
         <div className="py-8">
@@ -554,9 +537,9 @@ export default function StaticFooter({
             </div>
           )}
 
-          <div className="flex flex-wrap justify-center gap-6 mb-8">
-            {columns.flatMap((column) =>
-              column.links.map((link) => (
+          {validLinks.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-6 mb-8">
+              {validLinks.map((link) => (
                 <a
                   key={link.id}
                   href={link.url}
@@ -567,17 +550,17 @@ export default function StaticFooter({
                 >
                   {link.text}
                 </a>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
 
           {showSocialLinks && (
-            <div className="flex justify-center space-x-6 mb-8">
+            <div className="flex justify-center space-x-2 my-8 py-2">
               {socialLinks.map((link) => (
                 <a
                   key={link.id}
                   href={link.url}
-                  className="hover:opacity-80 transition-opacity"
+                  className="hover:opacity-80 transition-opacity mx-1"
                   style={{ color: accentColor }}
                   aria-label={enableAccessibility ? `Visite nosso ${link.type}` : undefined}
                 >
@@ -597,7 +580,7 @@ export default function StaticFooter({
     );
   };
 
-  // Modern Layout
+  // Layout Moderno
   const renderModernFooter = () => {
     return (
       <div className="container mx-auto px-4">
@@ -651,12 +634,12 @@ export default function StaticFooter({
             )}
 
             {showSocialLinks && (
-              <div className="flex flex-wrap space-x-4">
+              <div className="flex space-x-4">
                 {socialLinks.map((link) => (
                   <a
                     key={link.id}
                     href={link.url}
-                    className="hover:opacity-80 transition-opacity mb-2"
+                    className="hover:opacity-80 transition-opacity"
                     style={{ color: accentColor }}
                     aria-label={enableAccessibility ? `Visite nosso ${link.type}` : undefined}
                   >
@@ -671,24 +654,28 @@ export default function StaticFooter({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
               {columns.map((column) => (
                 <div key={column.id}>
-                  <h3 className="font-semibold text-lg mb-4" style={{ color: textColor }}>
-                    {column.title}
-                  </h3>
-                  <ul className="space-y-2">
-                    {column.links.map((link) => (
-                      <li key={link.id}>
-                        <a
-                          href={link.url}
-                          className="hover:underline transition-all text-sm"
-                          style={{ color: textColor, opacity: 0.8 }}
-                          onMouseOver={(e) => (e.currentTarget.style.opacity = "1")}
-                          onMouseOut={(e) => (e.currentTarget.style.opacity = "0.8")}
-                        >
-                          {link.text}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
+                  {column.links && column.links.length > 0 && (
+                    <>
+                      <h3 className="font-semibold text-lg mb-4" style={{ color: textColor }}>
+                        {column.title}
+                      </h3>
+                      <ul className="space-y-2">
+                        {column.links.map((link) => (
+                          <li key={link.id}>
+                            <a
+                              href={link.url}
+                              className="hover:underline transition-all text-sm"
+                              style={{ color: textColor, opacity: 0.8 }}
+                              onMouseOver={(e) => (e.currentTarget.style.opacity = "1")}
+                              onMouseOut={(e) => (e.currentTarget.style.opacity = "0.8")}
+                            >
+                              {link.text}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -700,7 +687,7 @@ export default function StaticFooter({
                 <h3 className="font-semibold text-lg mb-4" style={{ color: textColor }}>
                   {newsletterTitle}
                 </h3>
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col space-y-3">
                   <input
                     type="email"
                     placeholder={newsletterPlaceholder}
@@ -712,14 +699,10 @@ export default function StaticFooter({
                     }}
                   />
                   <button
-                    className={`py-2 px-4 rounded-md transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-opacity-50 focus:ring-${accentColor.replace(
-                      "#",
-                      ""
-                    )}`}
+                    className="py-2 px-4 rounded-md transition-opacity hover:opacity-90 focus:outline-none"
                     style={{
                       backgroundColor: accentColor,
                       color: "#ffffff",
-                      boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
                     }}
                   >
                     {newsletterButtonText}
@@ -736,12 +719,12 @@ export default function StaticFooter({
               <p style={{ color: textColor }}>{copyrightText}</p>
 
               {showSocialLinks && (
-                <div className="flex flex-wrap space-x-4 md:hidden mt-4 md:mt-0">
+                <div className="flex space-x-4 md:hidden mt-4 md:mt-0">
                   {socialLinks.map((link) => (
                     <a
                       key={link.id}
                       href={link.url}
-                      className="hover:opacity-80 transition-opacity mb-2"
+                      className="hover:opacity-80 transition-opacity"
                       style={{ color: accentColor }}
                       aria-label={enableAccessibility ? `Visite nosso ${link.type}` : undefined}
                     >
@@ -757,8 +740,11 @@ export default function StaticFooter({
     );
   };
 
-  // Compact Layout
+  // Layout Compacto
   const renderCompactFooter = () => {
+    // Filtrar apenas colunas com links para exibição
+    const validLinks = columns.flatMap((column) => (column.links && column.links.length > 0 ? column.links : []));
+
     return (
       <div className="container mx-auto px-4">
         <div className="py-6">
@@ -775,9 +761,9 @@ export default function StaticFooter({
               </div>
             )}
 
-            <div className="flex flex-wrap justify-center gap-4">
-              {columns.flatMap((column) =>
-                column.links.map((link) => (
+            {validLinks.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-4">
+                {validLinks.map((link) => (
                   <a
                     key={link.id}
                     href={link.url}
@@ -788,9 +774,9 @@ export default function StaticFooter({
                   >
                     {link.text}
                   </a>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div
@@ -804,12 +790,12 @@ export default function StaticFooter({
             )}
 
             {showSocialLinks && (
-              <div className="flex flex-wrap space-x-4">
+              <div className="flex space-x-2 my-2">
                 {socialLinks.map((link) => (
                   <a
                     key={link.id}
                     href={link.url}
-                    className="hover:opacity-80 transition-opacity mb-2"
+                    className="hover:opacity-80 transition-opacity mx-1"
                     style={{ color: accentColor }}
                     aria-label={enableAccessibility ? `Visite nosso ${link.type}` : undefined}
                   >
@@ -826,7 +812,7 @@ export default function StaticFooter({
 
   return (
     <motion.footer
-      className={`static-footer ${customClasses}`}
+      className={`w-full static-footer ${customClasses}`}
       {...getAnimationProps()}
       style={{
         ...getBackgroundStyle(),

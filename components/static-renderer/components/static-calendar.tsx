@@ -1,123 +1,240 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import type React from "react";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, MapPin, X, Trash2, Edit, Save } from "lucide-react";
 
-// Tipos para os eventos do calendário
-export interface CalendarEvent {
+interface CalendarEvent {
   id: string;
   title: string;
   description?: string;
-  start: string | Date;
-  end: string | Date;
-  allDay?: boolean;
+  date: string;
+  time?: string;
   color?: string;
   location?: string;
-  attendees?: string[];
+  allDay?: boolean;
   category?: string;
-  icon?: string;
 }
 
-// Propriedades do componente Calendário
-interface CalendarProps {
+interface BackgroundValue {
+  type: "color" | "image" | "gradient";
+  color: string;
+  image: {
+    url: string;
+    size: "cover" | "contain" | "auto";
+    position: "center" | "top" | "bottom" | "left" | "right";
+    repeat: "no-repeat" | "repeat" | "repeat-x" | "repeat-y";
+  };
+  gradient: {
+    type: "linear" | "radial";
+    angle: number;
+    colors: Array<{ color: string; position: number }>;
+  };
+  overlay: {
+    enabled: boolean;
+    color: string;
+    opacity: number;
+  };
+}
+
+interface StaticCalendarProps {
+  title?: string;
   events?: CalendarEvent[];
-  primaryColor?: string;
-  secondaryColor?: string;
-  accentColor?: string;
-  textColor?: string;
-  headerBackgroundColor?: string;
-  cellBackgroundColor?: string;
-  todayHighlightColor?: string;
-  eventCornerRadius?: string;
-  showWeekNumbers?: boolean;
-  startWeekOn?: "sunday" | "monday";
-  defaultView?: "month" | "week" | "day";
-  allowEventCreation?: boolean;
-  allowEventDeletion?: boolean;
-  allowEventEditing?: boolean;
-  showAllDayEvents?: boolean;
-  compactMode?: boolean;
+  view?: "month" | "mini";
+  showHeader?: boolean;
+  showNavigation?: boolean;
+  showToday?: boolean;
   showEventTime?: boolean;
   showEventLocation?: boolean;
-  showEventAttendees?: boolean;
-  eventTimeFormat?: "12h" | "24h";
-  dateFormat?: string;
-  firstDayOfWeek?: number;
-  locale?: string;
-  animation?: "fade" | "slide" | "scale" | "none";
-  animationDuration?: number;
+  allowEventCreation?: boolean;
+  allowEventEditing?: boolean;
+  allowEventDeletion?: boolean;
+  maxEventsPerDay?: number;
+  weekStartsOn?: "sunday" | "monday";
+  dateFormat?: "short" | "long";
+  headerColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
+  accentColor?: string;
+  eventTextColor?: string;
+  todayColor?: string;
+  borderColor?: string;
+  hoverColor?: string;
+  compactMode?: boolean;
+  showWeekends?: boolean;
+  margin?: { top: number; right: number; bottom: number; left: number };
+  padding?: { top: number; right: number; bottom: number; left: number };
+  border?: {
+    width: number;
+    style: "solid" | "dashed" | "dotted" | "none";
+    color: string;
+    radius: {
+      topLeft: number;
+      topRight: number;
+      bottomRight: number;
+      bottomLeft: number;
+    };
+  };
+  background?: BackgroundValue;
+  fontSize?: number;
+  eventSize?: number;
+  headerSize?: number;
+  hidden?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  id?: string;
 }
 
+const defaultBorder = {
+  width: 1,
+  style: "solid" as const,
+  color: "#e5e7eb",
+  radius: {
+    topLeft: 8,
+    topRight: 8,
+    bottomRight: 8,
+    bottomLeft: 8,
+  },
+};
+
+const defaultBackground: BackgroundValue = {
+  type: "color" as const,
+  color: "#ffffff",
+  image: {
+    url: "",
+    size: "cover" as const,
+    position: "center" as const,
+    repeat: "no-repeat" as const,
+  },
+  gradient: {
+    type: "linear" as const,
+    angle: 0,
+    colors: [
+      { color: "#ffffff", position: 0 },
+      { color: "#f9fafb", position: 100 },
+    ],
+  },
+  overlay: {
+    enabled: false,
+    color: "#000000",
+    opacity: 50,
+  },
+};
+
+const defaultEvents: CalendarEvent[] = [
+  {
+    id: "1",
+    title: "Reunião de Equipe",
+    description: "Reunião semanal da equipe de desenvolvimento",
+    date: "2024-01-15",
+    time: "09:00",
+    color: "#3b82f6",
+    location: "Sala de Reuniões",
+    allDay: false,
+    category: "Trabalho",
+  },
+  {
+    id: "2",
+    title: "Apresentação Cliente",
+    description: "Apresentação do projeto para o cliente ABC",
+    date: "2024-01-18",
+    time: "14:30",
+    color: "#ef4444",
+    location: "Online",
+    allDay: false,
+    category: "Negócios",
+  },
+  {
+    id: "3",
+    title: "Workshop Design",
+    description: "Workshop sobre design de interfaces",
+    date: "2024-01-22",
+    time: "",
+    color: "#10b981",
+    location: "Auditório",
+    allDay: true,
+    category: "Educação",
+  },
+  {
+    id: "4",
+    title: "Revisão de Projeto",
+    description: "Revisão final do projeto X",
+    date: "2024-01-25",
+    time: "10:00",
+    color: "#f59e0b",
+    location: "Escritório",
+    allDay: false,
+    category: "Trabalho",
+  },
+  {
+    id: "5",
+    title: "Treinamento",
+    description: "Treinamento em novas tecnologias",
+    date: "2024-01-28",
+    time: "",
+    color: "#8b5cf6",
+    location: "Centro de Treinamento",
+    allDay: true,
+    category: "Educação",
+  },
+];
+
 export default function StaticCalendar({
-  events = [],
-  primaryColor = "#3b82f6",
-  secondaryColor = "#93c5fd",
-  accentColor = "#2563eb",
-  textColor = "#1f2937",
-  headerBackgroundColor = "#ffffff",
-  cellBackgroundColor = "#ffffff",
-  todayHighlightColor = "#dbeafe",
-  eventCornerRadius = "rounded-md",
-  showWeekNumbers = false,
-  startWeekOn = "sunday",
-  defaultView = "month",
-  allowEventCreation = true,
-  allowEventDeletion = true,
-  allowEventEditing = true,
-  showAllDayEvents = true,
-  compactMode = false,
+  title = "Calendário",
+  events = defaultEvents,
+  view = "month",
+  showHeader = true,
+  showNavigation = true,
+  showToday = true,
   showEventTime = true,
-  showEventLocation = true,
-  showEventAttendees = false,
-  eventTimeFormat = "24h",
-  dateFormat = "dd/MM/yyyy",
-  firstDayOfWeek = 0,
-  locale = "pt-BR",
-  animation = "fade",
-  animationDuration = 0.3,
-}: CalendarProps) {
-  // Estado para armazenar a data atual exibida
+  showEventLocation = false,
+  allowEventCreation = false, // Disabled for static version
+  allowEventEditing = false, // Disabled for static version
+  allowEventDeletion = false, // Disabled for static version
+  maxEventsPerDay = 3,
+  weekStartsOn = "sunday",
+  dateFormat = "short",
+  headerColor = "#1f2937",
+  backgroundColor = "#ffffff",
+  textColor = "#374151",
+  accentColor = "#3b82f6",
+  eventTextColor = "#ffffff",
+  todayColor = "#dbeafe",
+  borderColor = "#e5e7eb",
+  hoverColor = "#f3f4f6",
+  compactMode = false,
+  showWeekends = true,
+  margin = { top: 0, right: 0, bottom: 0, left: 0 },
+  padding = { top: 16, right: 16, bottom: 16, left: 16 },
+  border = defaultBorder,
+  background = defaultBackground,
+  fontSize = 13,
+  eventSize = 11,
+  headerSize = 14,
+  hidden = false,
+  className = "",
+  style = {},
+  id,
+}: StaticCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<"month" | "week" | "day">(defaultView);
-  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(
-    events.map((event) => ({
-      ...event,
-      start: event.start instanceof Date ? event.start : new Date(event.start),
-      end: event.end instanceof Date ? event.end : new Date(event.end),
-    }))
-  );
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
-  // Atualizar eventos quando as props mudarem
-  useEffect(() => {
-    setCalendarEvents(
-      events.map((event) => ({
-        ...event,
-        start: event.start instanceof Date ? event.start : new Date(event.start),
-        end: event.end instanceof Date ? event.end : new Date(event.end),
-      }))
-    );
-  }, [events]);
+  if (hidden) return null;
 
-  // Função para obter os dias do mês atual
   const getDaysInMonth = useCallback(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-
-    // Primeiro dia do mês
     const firstDay = new Date(year, month, 1);
 
-    // Último dia do mês
-    const lastDay = new Date(year, month + 1, 0);
+    const startOffset = weekStartsOn === "monday" ? (firstDay.getDay() + 6) % 7 : firstDay.getDay();
 
-    // Ajustar para o primeiro dia da semana
-    const startOffset = (firstDay.getDay() - firstDayOfWeek + 7) % 7;
     const firstCalendarDay = new Date(firstDay);
     firstCalendarDay.setDate(firstCalendarDay.getDate() - startOffset);
 
-    // Criar array com todos os dias a serem exibidos
     const days: Date[] = [];
-    const totalDays = 42; // 6 semanas * 7 dias
+    const totalDays = compactMode ? 35 : 42;
 
     for (let i = 0; i < totalDays; i++) {
       const day = new Date(firstCalendarDay);
@@ -126,548 +243,423 @@ export default function StaticCalendar({
     }
 
     return days;
-  }, [currentDate, firstDayOfWeek]);
+  }, [currentDate, weekStartsOn, compactMode]);
 
-  // Função para obter os dias da semana atual
-  const getDaysInWeek = useCallback(() => {
-    const date = new Date(currentDate);
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : firstDayOfWeek); // Ajustar para começar no dia correto
-
-    date.setDate(diff);
-
-    const days: Date[] = [];
-    for (let i = 0; i < 7; i++) {
-      const newDate = new Date(date);
-      newDate.setDate(date.getDate() + i);
-      days.push(newDate);
-    }
-
-    return days;
-  }, [currentDate, firstDayOfWeek]);
-
-  // Função para obter as horas do dia atual
-  const getHoursInDay = useCallback(() => {
-    const hours: Date[] = [];
-    const date = new Date(currentDate);
-    date.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < 24; i++) {
-      const newDate = new Date(date);
-      newDate.setHours(i);
-      hours.push(newDate);
-    }
-
-    return hours;
-  }, [currentDate]);
-
-  // Função para formatar a data
-  const formatDate = useCallback(
-    (date: Date, format: string = dateFormat) => {
-      try {
-        const options: Intl.DateTimeFormatOptions = {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        };
-        return new Intl.DateTimeFormat(locale, options).format(date);
-      } catch (error) {
-        console.error("Error formatting date:", error);
-        return date.toLocaleDateString();
-      }
+  const getEventsForDay = useCallback(
+    (day: Date) => {
+      const dayStr = day.toISOString().split("T")[0];
+      return events.filter((event) => event.date === dayStr);
     },
-    [dateFormat, locale]
+    [events]
   );
 
-  // Função para formatar a hora
-  const formatTime = useCallback(
-    (date: Date) => {
-      try {
-        const options: Intl.DateTimeFormatOptions = {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: eventTimeFormat === "12h",
-        };
-        return new Intl.DateTimeFormat(locale, options).format(date);
-      } catch (error) {
-        console.error("Error formatting time:", error);
-        return date.toLocaleTimeString();
-      }
-    },
-    [eventTimeFormat, locale]
-  );
-
-  // Função para verificar se um evento está em um determinado dia
-  const isEventInDay = useCallback((event: CalendarEvent, day: Date) => {
-    const eventStart = event.start instanceof Date ? event.start : new Date(event.start);
-    const eventEnd = event.end instanceof Date ? event.end : new Date(event.end);
-
-    const dayStart = new Date(day);
-    dayStart.setHours(0, 0, 0, 0);
-
-    const dayEnd = new Date(day);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    return (
-      (eventStart >= dayStart && eventStart <= dayEnd) ||
-      (eventEnd >= dayStart && eventEnd <= dayEnd) ||
-      (eventStart <= dayStart && eventEnd >= dayEnd)
-    );
-  }, []);
-
-  // Função para verificar se um evento está em uma determinada hora
-  const isEventInHour = useCallback((event: CalendarEvent, hour: Date) => {
-    if (event.allDay) return false;
-
-    const eventStart = event.start instanceof Date ? event.start : new Date(event.start);
-    const eventEnd = event.end instanceof Date ? event.end : new Date(event.end);
-
-    const hourStart = new Date(hour);
-    const hourEnd = new Date(hour);
-    hourEnd.setHours(hourEnd.getHours() + 1);
-
-    return (
-      (eventStart >= hourStart && eventStart < hourEnd) ||
-      (eventEnd > hourStart && eventEnd <= hourEnd) ||
-      (eventStart <= hourStart && eventEnd >= hourEnd)
-    );
-  }, []);
-
-  // Função para navegar para o mês anterior
   const goToPreviousMonth = () => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      if (currentView === "month") {
-        newDate.setMonth(prev.getMonth() - 1);
-      } else if (currentView === "week") {
-        newDate.setDate(prev.getDate() - 7);
-      } else {
-        newDate.setDate(prev.getDate() - 1);
-      }
+      newDate.setMonth(prev.getMonth() - 1);
       return newDate;
     });
   };
 
-  // Função para navegar para o próximo mês
   const goToNextMonth = () => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
-      if (currentView === "month") {
-        newDate.setMonth(prev.getMonth() + 1);
-      } else if (currentView === "week") {
-        newDate.setDate(prev.getDate() + 7);
-      } else {
-        newDate.setDate(prev.getDate() + 1);
-      }
+      newDate.setMonth(prev.getMonth() + 1);
       return newDate;
     });
   };
 
-  // Função para ir para hoje
   const goToToday = () => {
     setCurrentDate(new Date());
   };
 
-  // Obter propriedades de animação
-  const getAnimationProps = () => {
-    switch (animation) {
-      case "fade":
-        return {
-          initial: { opacity: 0 },
-          animate: { opacity: 1 },
-          transition: { duration: animationDuration },
-        };
-      case "slide":
-        return {
-          initial: { opacity: 0, y: 20 },
-          animate: { opacity: 1, y: 0 },
-          transition: { duration: animationDuration },
-        };
-      case "scale":
-        return {
-          initial: { opacity: 0, scale: 0.9 },
-          animate: { opacity: 1, scale: 1 },
-          transition: { duration: animationDuration },
-        };
-      case "none":
-      default:
-        return {};
-    }
+  const formatMonthYear = () => {
+    return currentDate.toLocaleDateString("pt-BR", {
+      month: dateFormat === "long" ? "long" : "short",
+      year: "numeric",
+    });
   };
 
-  // Renderizar os dias da semana
-  const renderWeekDays = () => {
-    const weekDays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const orderedWeekDays = [...weekDays];
+  const getWeekDays = () => {
+    const days = weekStartsOn === "monday" ? ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"] : ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
-    // Reordenar os dias da semana com base no dia de início
-    if (firstDayOfWeek > 0) {
-      for (let i = 0; i < firstDayOfWeek; i++) {
-        orderedWeekDays.push(orderedWeekDays.shift()!);
-      }
+    return showWeekends ? days : days.slice(0, 5);
+  };
+
+  const getBackgroundStyle = () => {
+    if (background.type === "color") {
+      return { backgroundColor: background.color };
     }
+    if (background.type === "image" && background.image.url) {
+      return {
+        backgroundImage: `url(${background.image.url})`,
+        backgroundSize: background.image.size,
+        backgroundPosition: background.image.position,
+        backgroundRepeat: background.image.repeat,
+      };
+    }
+    if (background.type === "gradient") {
+      const colors = background.gradient.colors.map((c) => `${c.color} ${c.position}%`).join(", ");
+      const gradientType =
+        background.gradient.type === "linear" ? `linear-gradient(${background.gradient.angle}deg, ${colors})` : `radial-gradient(circle, ${colors})`;
+      return { backgroundImage: gradientType };
+    }
+    return { backgroundColor: background.color };
+  };
 
-    return (
-      <div className="grid grid-cols-7 border-b">
-        {orderedWeekDays.map((day, index) => (
-          <div key={index} className="py-2 text-center text-sm font-medium" style={{ color: textColor }}>
-            {day}
-          </div>
-        ))}
+  const getBorderStyle = () => {
+    return {
+      borderWidth: `${border.width}px`,
+      borderStyle: border.style,
+      borderColor: border.color,
+      borderRadius: `${border.radius.topLeft}px ${border.radius.topRight}px ${border.radius.bottomRight}px ${border.radius.bottomLeft}px`,
+    };
+  };
+
+  const marginStyle = {
+    marginTop: `${margin.top}px`,
+    marginRight: `${margin.right}px`,
+    marginBottom: `${margin.bottom}px`,
+    marginLeft: `${margin.left}px`,
+  };
+
+  const paddingStyle = {
+    paddingTop: `${padding.top}px`,
+    paddingRight: `${padding.right}px`,
+    paddingBottom: `${padding.bottom}px`,
+    paddingLeft: `${padding.left}px`,
+  };
+
+  const openEventModal = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setShowEventModal(true);
+  };
+
+  const closeEventModal = () => {
+    setShowEventModal(false);
+    setSelectedEvent(null);
+  };
+
+  const renderEvent = (event: CalendarEvent) => (
+    <motion.div
+      key={event.id}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="text-xs px-1 py-0.5 rounded truncate mb-0.5 cursor-pointer hover:opacity-80 transition-all duration-200"
+      style={{
+        backgroundColor: event.color || accentColor,
+        color: eventTextColor,
+        fontSize: `${eventSize}px`,
+      }}
+      title={`${event.title}${showEventTime && event.time ? ` - ${event.time}` : ""}${
+        showEventLocation && event.location ? ` (${event.location})` : ""
+      }`}
+      onClick={(e) => {
+        e.stopPropagation();
+        openEventModal(event);
+      }}
+    >
+      <div className="flex items-center">
+        {showEventTime && event.time && !event.allDay && <Clock size={eventSize - 2} className="mr-1 flex-shrink-0" />}
+        <span className="truncate">{event.title}</span>
       </div>
-    );
-  };
+    </motion.div>
+  );
 
-  // Renderizar o calendário mensal
-  const renderMonthView = () => {
-    const days = getDaysInMonth();
-    const currentMonth = currentDate.getMonth();
-    const today = new Date();
+  const renderEventModal = () => (
+    <AnimatePresence>
+      {showEventModal && selectedEvent && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={closeEventModal}
+        >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b flex justify-between items-center">
+              <h3 className="text-lg font-medium">Detalhes do Evento</h3>
+              <button className="text-gray-400 hover:text-gray-600 transition-colors" onClick={closeEventModal}>
+                <X size={20} />
+              </button>
+            </div>
 
-    return (
-      <div className="grid grid-cols-7 auto-rows-fr">
-        {days.map((day, index) => {
-          const isCurrentMonth = day.getMonth() === currentMonth;
-          const isToday = day.toDateString() === today.toDateString();
-          const dayEvents = calendarEvents.filter((event) => isEventInDay(event, day));
-
-          return (
-            <div
-              key={index}
-              className={`
-                border-b border-r p-1 min-h-[100px] 
-                ${isCurrentMonth ? "" : "opacity-40"}
-                ${isToday ? "" : ""}
-                transition-colors
-              `}
-              style={{
-                backgroundColor: isToday ? todayHighlightColor : cellBackgroundColor,
-                color: textColor,
-              }}
-            >
-              <div className="flex justify-between items-center mb-1">
-                <span className={`text-sm ${isToday ? "font-bold" : ""}`}>{day.getDate()}</span>
+            <div className="p-4 space-y-4">
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-1">Título</h4>
+                <p className="text-base">{selectedEvent.title}</p>
               </div>
 
-              <div className={`space-y-1 ${compactMode ? "max-h-[80px] overflow-y-auto" : ""}`}>
-                {dayEvents.slice(0, compactMode ? 3 : undefined).map((event) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`
-                      p-1 text-xs truncate ${eventCornerRadius}
-                      hover:opacity-90 transition-opacity
-                    `}
+              {selectedEvent.description && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Descrição</h4>
+                  <p className="text-sm text-gray-600">{selectedEvent.description}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Data</h4>
+                  <p className="text-sm">
+                    {new Date(selectedEvent.date).toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+
+                {!selectedEvent.allDay && selectedEvent.time && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-1">Horário</h4>
+                    <p className="text-sm">{selectedEvent.time}</p>
+                  </div>
+                )}
+              </div>
+
+              {selectedEvent.allDay && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Tipo</h4>
+                  <p className="text-sm">Evento de dia inteiro</p>
+                </div>
+              )}
+
+              {selectedEvent.location && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Local</h4>
+                  <p className="text-sm flex items-center">
+                    <MapPin size={14} className="mr-1" />
+                    {selectedEvent.location}
+                  </p>
+                </div>
+              )}
+
+              {selectedEvent.category && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Categoria</h4>
+                  <div
+                    className="inline-block px-2 py-1 rounded-full text-xs"
                     style={{
-                      backgroundColor: event.color || primaryColor,
-                      color: "#ffffff",
+                      backgroundColor: selectedEvent.color + "20",
+                      color: selectedEvent.color,
                     }}
                   >
-                    {event.allDay ? (
-                      <div className="flex items-center">
-                        <span className="mr-1">●</span>
-                        <span className="truncate">{event.title}</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center">
-                        {showEventTime && (
-                          <span className="mr-1 whitespace-nowrap">
-                            {formatTime(event.start instanceof Date ? event.start : new Date(event.start))}
-                          </span>
-                        )}
-                        <span className="truncate">{event.title}</span>
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-
-                {compactMode && dayEvents.length > 3 && <div className="text-xs text-center text-gray-500 mt-1">+ {dayEvents.length - 3} mais</div>}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Renderizar a visualização semanal
-  const renderWeekView = () => {
-    const days = getDaysInWeek();
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-    const today = new Date();
-
-    return (
-      <div className="flex flex-col h-[600px]">
-        <div className="grid grid-cols-8 border-b">
-          <div className="py-2 text-center text-sm font-medium border-r"></div>
-          {days.map((day, index) => {
-            const isToday = day.toDateString() === today.toDateString();
-            return (
-              <div
-                key={index}
-                className={`
-                  py-2 text-center text-sm font-medium border-r
-                  ${isToday ? "font-bold" : ""}
-                `}
-                style={{
-                  backgroundColor: isToday ? todayHighlightColor : headerBackgroundColor,
-                  color: textColor,
-                }}
-              >
-                <div>{day.getDate()}</div>
-                <div className="text-xs">{day.toLocaleDateString(locale, { weekday: "short" })}</div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-8">
-            <div className="col-span-1 border-r">
-              {hours.map((hour) => (
-                <div key={hour} className="h-12 border-b text-xs text-right pr-2 pt-1" style={{ color: textColor }}>
-                  {hour === 0 ? "12 AM" : hour < 12 ? `${hour} AM` : hour === 12 ? "12 PM" : `${hour - 12} PM`}
-                </div>
-              ))}
-            </div>
-
-            <div className="col-span-7 grid grid-cols-7">
-              {days.map((day, dayIndex) => (
-                <div key={dayIndex} className="border-r">
-                  {hours.map((hour) => {
-                    const hourDate = new Date(day);
-                    hourDate.setHours(hour, 0, 0, 0);
-
-                    const hourEvents = calendarEvents.filter((event) => !event.allDay && isEventInHour(event, hourDate));
-
-                    return (
-                      <div key={hour} className="h-12 border-b relative" style={{ backgroundColor: cellBackgroundColor }}>
-                        {hourEvents.map((event) => (
-                          <motion.div
-                            key={event.id}
-                            initial={{ opacity: 0, x: -5 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className={`
-                              absolute left-0 right-0 mx-1 p-1 text-xs truncate ${eventCornerRadius}
-                              hover:opacity-90 transition-opacity
-                            `}
-                            style={{
-                              backgroundColor: event.color || primaryColor,
-                              color: "#ffffff",
-                              top: "2px",
-                              zIndex: 10,
-                            }}
-                          >
-                            <div className="truncate">{event.title}</div>
-                          </motion.div>
-                        ))}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* All-day events */}
-        {showAllDayEvents && (
-          <div className="border-t mt-4 pt-2">
-            <div className="font-medium mb-2 px-2">Eventos de dia inteiro</div>
-            <div className="grid grid-cols-7 gap-2 px-2">
-              {days.map((day, dayIndex) => {
-                const allDayEvents = calendarEvents.filter((event) => event.allDay && isEventInDay(event, day));
-
-                return (
-                  <div key={dayIndex} className="min-h-[40px]">
-                    {allDayEvents.map((event) => (
-                      <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`
-                          p-1 mb-1 text-xs truncate cursor-pointer ${eventCornerRadius}
-                          hover:opacity-90 transition-opacity
-                        `}
-                        style={{
-                          backgroundColor: event.color || primaryColor,
-                          color: "#ffffff",
-                        }}
-                      >
-                        <div className="truncate">{event.title}</div>
-                      </motion.div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  // Renderizar a visualização diária
-  const renderDayView = () => {
-    const hours = getHoursInDay();
-
-    return (
-      <div className="flex flex-col h-[600px]">
-        <div className="text-center py-4 font-medium border-b">{formatDate(currentDate)}</div>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-24">
-            {hours.map((hour, index) => {
-              const hourEvents = calendarEvents.filter((event) => !event.allDay && isEventInHour(event, hour));
-
-              return (
-                <div key={index} className="border-b relative" style={{ height: "60px" }}>
-                  <div className="absolute left-0 top-0 h-full border-r w-16 text-xs text-right pr-2 pt-1">
-                    {hour.getHours() === 0
-                      ? "12 AM"
-                      : hour.getHours() < 12
-                      ? `${hour.getHours()} AM`
-                      : hour.getHours() === 12
-                      ? "12 PM"
-                      : `${hour.getHours() - 12} PM`}
-                  </div>
-
-                  <div className="absolute left-16 right-0 top-0 h-full">
-                    {hourEvents.map((event) => (
-                      <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, x: -5 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`
-                          absolute left-0 right-0 mx-2 p-2 ${eventCornerRadius}
-                          hover:opacity-90 transition-opacity
-                        `}
-                        style={{
-                          backgroundColor: event.color || primaryColor,
-                          color: "#ffffff",
-                          top: "5px",
-                          zIndex: 10,
-                        }}
-                      >
-                        <div className="font-medium">{event.title}</div>
-                        {event.description && <div className="text-xs mt-1 opacity-90">{event.description}</div>}
-                        {showEventLocation && event.location && (
-                          <div className="text-xs mt-1 flex items-center">
-                            <MapPin size={12} className="mr-1" />
-                            {event.location}
-                          </div>
-                        )}
-                      </motion.div>
-                    ))}
+                    {selectedEvent.category}
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* All-day events */}
-        {showAllDayEvents && (
-          <div className="border-t mt-4 pt-2">
-            <div className="font-medium mb-2 px-4">Eventos de dia inteiro</div>
-            <div className="px-4 space-y-1">
-              {calendarEvents
-                .filter((event) => event.allDay && isEventInDay(event, currentDate))
-                .map((event) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`
-                      p-2 text-sm cursor-pointer ${eventCornerRadius}
-                      hover:opacity-90 transition-opacity
-                    `}
-                    style={{
-                      backgroundColor: event.color || primaryColor,
-                      color: "#ffffff",
-                    }}
-                  >
-                    <div className="font-medium">{event.title}</div>
-                    {event.description && <div className="text-xs mt-1 opacity-90">{event.description}</div>}
-                    {showEventLocation && event.location && (
-                      <div className="text-xs mt-1 flex items-center">
-                        <MapPin size={12} className="mr-1" />
-                        {event.location}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
+              )}
             </div>
-          </div>
-        )}
-      </div>
-    );
-  };
+
+            <div className="p-4 border-t">
+              <button onClick={closeEventModal} className="w-full px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors">
+                Fechar
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
+  const today = new Date();
+  const days = getDaysInMonth();
+  const currentMonth = currentDate.getMonth();
 
   return (
-    <motion.div className="border rounded-lg shadow-sm overflow-hidden" style={{ backgroundColor: headerBackgroundColor }} {...getAnimationProps()}>
-      {/* Cabeçalho do calendário */}
-      <div className="p-4 border-b flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center">
-          <button className="p-2 rounded-md hover:bg-gray-100 transition-colors" onClick={goToPreviousMonth}>
-            <ChevronLeft size={20} />
+    <motion.div
+      className={`w-full static-calendar ${className}`}
+      style={{
+        ...getBackgroundStyle(),
+        ...getBorderStyle(),
+        ...marginStyle,
+        ...paddingStyle,
+        ...(style || {}),
+      }}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      id={id}
+    >
+      {/* Header */}
+      {showHeader && (
+        <div className="flex items-center justify-between mb-4">
+          <h3
+            className="font-semibold flex items-center"
+            style={{
+              color: headerColor,
+              fontSize: `${headerSize}px`,
+            }}
+          >
+            <CalendarIcon size={headerSize} className="mr-2" />
+            {title}
+          </h3>
+        </div>
+      )}
+
+      {/* Navigation */}
+      {showNavigation && (
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={goToPreviousMonth} className="p-2 rounded hover:bg-gray-100 transition-colors" style={{ color: textColor }}>
+            <ChevronLeft size={18} />
           </button>
 
-          <h2 className="text-lg font-medium mx-2">
-            {currentView === "month"
-              ? currentDate.toLocaleDateString(locale, { month: "long", year: "numeric" })
-              : currentView === "week"
-              ? `${formatDate(getDaysInWeek()[0])} - ${formatDate(getDaysInWeek()[6])}`
-              : formatDate(currentDate)}
-          </h2>
+          <h4
+            className="font-medium text-center flex-1"
+            style={{
+              color: headerColor,
+              fontSize: `${fontSize + 1}px`,
+            }}
+          >
+            {formatMonthYear()}
+          </h4>
 
-          <button className="p-2 rounded-md hover:bg-gray-100 transition-colors" onClick={goToNextMonth}>
-            <ChevronRight size={20} />
+          <button onClick={goToNextMonth} className="p-2 rounded hover:bg-gray-100 transition-colors" style={{ color: textColor }}>
+            <ChevronRight size={18} />
           </button>
+        </div>
+      )}
 
-          <button className="ml-2 px-3 py-1 text-sm border rounded-md hover:bg-gray-100 transition-colors" onClick={goToToday}>
+      {showToday && (
+        <div className="text-center mb-3">
+          <button
+            onClick={goToToday}
+            className="text-xs px-3 py-1.5 rounded border hover:bg-gray-50 transition-colors"
+            style={{
+              color: accentColor,
+              borderColor: accentColor,
+              fontSize: `${fontSize}px`,
+            }}
+          >
             Hoje
           </button>
         </div>
+      )}
 
-        <div className="flex items-center space-x-2">
-          <div className="border rounded-md flex">
-            <button
-              className={`px-3 py-1 text-sm ${currentView === "month" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"}`}
-              onClick={() => setCurrentView("month")}
+      {/* Calendar Grid */}
+      <div className="w-full">
+        {/* Week days header */}
+        <div className={`grid ${showWeekends ? "grid-cols-7" : "grid-cols-5"} gap-0.5 mb-2`}>
+          {getWeekDays().map((day, index) => (
+            <div
+              key={index}
+              className="text-center py-2 font-medium"
+              style={{
+                color: textColor,
+                fontSize: `${fontSize}px`,
+              }}
             >
-              Mês
-            </button>
-            <button
-              className={`px-3 py-1 text-sm ${currentView === "week" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"}`}
-              onClick={() => setCurrentView("week")}
-            >
-              Semana
-            </button>
-            <button
-              className={`px-3 py-1 text-sm ${currentView === "day" ? "bg-blue-100 text-blue-700" : "hover:bg-gray-100"}`}
-              onClick={() => setCurrentView("day")}
-            >
-              Dia
-            </button>
-          </div>
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Calendar days */}
+        <div className={`grid ${showWeekends ? "grid-cols-7" : "grid-cols-5"} gap-1`}>
+          {days
+            .filter((day) => showWeekends || (day.getDay() !== 0 && day.getDay() !== 6))
+            .map((day, index) => {
+              const isCurrentMonth = day.getMonth() === currentMonth;
+              const isToday = day.toDateString() === today.toDateString();
+              const dayEvents = getEventsForDay(day);
+              const displayEvents = dayEvents.slice(0, maxEventsPerDay);
+              const hasMoreEvents = dayEvents.length > maxEventsPerDay;
+
+              return (
+                <motion.div
+                  key={index}
+                  className={`
+                    relative p-2 border rounded-lg cursor-pointer transition-all duration-200
+                    ${isCurrentMonth ? "" : "opacity-40"}
+                    ${compactMode ? "min-h-[35px]" : "min-h-[80px]"}
+                    hover:shadow-md
+                  `}
+                  style={{
+                    backgroundColor: isToday ? todayColor : backgroundColor,
+                    borderColor: borderColor,
+                    fontSize: `${fontSize}px`,
+                  }}
+                  whileHover={{
+                    backgroundColor: hoverColor,
+                    scale: 1.02,
+                  }}
+                  transition={{ duration: 0.1 }}
+                >
+                  <div className="flex justify-between items-start mb-1">
+                    <span className={`text-sm ${isToday ? "font-bold" : "font-medium"}`} style={{ color: textColor }}>
+                      {day.getDate()}
+                    </span>
+                  </div>
+
+                  {!compactMode && (
+                    <div className="space-y-1">
+                      <AnimatePresence>{displayEvents.map(renderEvent)}</AnimatePresence>
+                      {hasMoreEvents && (
+                        <div
+                          className="text-xs text-center opacity-70 cursor-pointer hover:opacity-100"
+                          style={{
+                            color: textColor,
+                            fontSize: `${eventSize}px`,
+                          }}
+                        >
+                          +{dayEvents.length - maxEventsPerDay} mais
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {compactMode && dayEvents.length > 0 && (
+                    <div className="absolute bottom-1 right-1 flex space-x-0.5">
+                      {dayEvents.slice(0, 3).map((event, idx) => (
+                        <div key={idx} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: event.color || accentColor }} />
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
         </div>
       </div>
 
-      {/* Conteúdo do calendário */}
-      <div className="bg-white">
-        {currentView === "month" && (
-          <>
-            {renderWeekDays()}
-            {renderMonthView()}
-          </>
-        )}
+      {/* Mini events list for compact mode */}
+      {compactMode && events.length > 0 && (
+        <div className="mt-4 pt-3 border-t" style={{ borderColor: borderColor }}>
+          <div className="space-y-2 max-h-24 overflow-y-auto">
+            {events.slice(0, 4).map((event) => (
+              <motion.div
+                key={event.id}
+                className="flex items-center text-xs cursor-pointer hover:bg-gray-50 p-1 rounded"
+                style={{ fontSize: `${eventSize}px` }}
+                onClick={() => openEventModal(event)}
+                whileHover={{ scale: 1.02 }}
+              >
+                <div className="w-2 h-2 rounded-full mr-2 flex-shrink-0" style={{ backgroundColor: event.color || accentColor }} />
+                <span className="truncate flex-1" style={{ color: textColor }}>
+                  {event.title}
+                </span>
+                {showEventTime && event.time && (
+                  <span className="ml-2 text-xs opacity-70" style={{ color: textColor }}>
+                    {event.time}
+                  </span>
+                )}
+              </motion.div>
+            ))}
+            {events.length > 4 && (
+              <div className="text-xs text-center opacity-70" style={{ color: textColor }}>
+                +{events.length - 4} eventos
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
-        {currentView === "week" && renderWeekView()}
-
-        {currentView === "day" && renderDayView()}
-      </div>
+      {/* Event Modal */}
+      {renderEventModal()}
     </motion.div>
   );
 }

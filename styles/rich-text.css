@@ -1,0 +1,48 @@
+/* Rich Text Component Styles */
+.rich-text-content.prose {
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.rich-text-content.prose p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.rich-text-content.prose h1,
+.rich-text-content.prose h2,
+.rich-text-content.prose h3,
+.rich-text-content.prose h4,
+.rich-text-content.prose h5,
+.rich-text-content.prose h6 {
+  color: inherit;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.rich-text-content.prose a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.rich-text-content.prose ul,
+.rich-text-content.prose ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.rich-text-content.prose blockquote {
+  font-style: italic;
+  border-left-color: currentColor;
+  opacity: 0.8;
+}
+
+.rich-text-content.prose img {
+  margin: 0.5em 0;
+}
+
+/* Override any conflicting styles from global typography */
+.rich-text-content.prose * {
+  text-align: inherit;
+}

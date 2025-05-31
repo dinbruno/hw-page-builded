@@ -24,42 +24,6 @@ const AnimatedBackground = ({ primaryColor, secondaryColor }: { primaryColor: st
         }}
       />
 
-      {/* Animated circles with improved blur */}
-      <div className="absolute inset-0">
-        <svg className="w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="20" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
-
-          <circle cx="10%" cy="10%" r="80" fill="white" filter="url(#glow)">
-            <animate attributeName="cy" values="10%;15%;10%" dur="10s" repeatCount="indefinite" />
-            <animate attributeName="cx" values="10%;15%;10%" dur="12s" repeatCount="indefinite" />
-            <animate attributeName="r" values="80;120;80" dur="8s" repeatCount="indefinite" />
-          </circle>
-
-          <circle cx="80%" cy="20%" r="100" fill="white" filter="url(#glow)">
-            <animate attributeName="cy" values="20%;25%;20%" dur="14s" repeatCount="indefinite" />
-            <animate attributeName="cx" values="80%;75%;80%" dur="16s" repeatCount="indefinite" />
-            <animate attributeName="r" values="100;150;100" dur="10s" repeatCount="indefinite" />
-          </circle>
-
-          <circle cx="30%" cy="80%" r="90" fill="white" filter="url(#glow)">
-            <animate attributeName="cy" values="80%;75%;80%" dur="12s" repeatCount="indefinite" />
-            <animate attributeName="cx" values="30%;35%;30%" dur="14s" repeatCount="indefinite" />
-            <animate attributeName="r" values="90;130;90" dur="9s" repeatCount="indefinite" />
-          </circle>
-
-          <circle cx="90%" cy="90%" r="120" fill="white" filter="url(#glow)">
-            <animate attributeName="cy" values="90%;85%;90%" dur="16s" repeatCount="indefinite" />
-            <animate attributeName="cx" values="90%;85%;90%" dur="18s" repeatCount="indefinite" />
-            <animate attributeName="r" values="120;180;120" dur="11s" repeatCount="indefinite" />
-          </circle>
-        </svg>
-      </div>
-
       {/* Improved grid with more blur */}
       <div
         className="absolute inset-0 opacity-10"
