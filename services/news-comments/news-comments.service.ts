@@ -141,7 +141,7 @@ export class NewsCommentsService {
       throw new Error("API_URL is not defined");
     }
 
-    let url = `${API_URL}/news-comments/by-slug/${newsSlug}`;
+    let url = `${API_URL}/news-comments/news/${newsSlug}`;
     const params = new URLSearchParams();
 
     if (workspaceId) {

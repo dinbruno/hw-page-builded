@@ -139,7 +139,7 @@ export class NewsLikesService {
       throw new Error("API_URL is not defined");
     }
 
-    let url = `${API_URL}/news-likes/by-slug/${newsSlug}`;
+    let url = `${API_URL}/news-likes/news/${newsSlug}`;
     const params = new URLSearchParams();
 
     if (workspaceId) {

@@ -41,10 +41,12 @@ interface BorderProps {
 // Interface principal do componente
 interface StaticBreadcrumbProps {
   // Configurações de Conteúdo
+  items?: BreadcrumbItem[];
   showHomeIcon?: boolean;
   homeLabel?: string;
   homeHref?: string;
-  separator?: "chevron" | "/" | "|" | "-" | ">" | "•";
+  separator?: "chevron" | "/" | "|" | "-" | ">" | "•" | "custom";
+  customSeparator?: string;
   // Configurações Visuais
   backgroundColor?: string;
   textColor?: string;
@@ -53,7 +55,21 @@ interface StaticBreadcrumbProps {
   hoverColor?: string;
   fontSize?: number;
   fontWeight?: "normal" | "medium" | "semibold" | "bold";
-  // Configurações de Mapeamento de Rotas
+  textAlignment?: "left" | "center" | "right";
+  // Configurações de Ícones e Separadores
+  iconSize?: number;
+  iconColor?: string;
+  separatorSize?: number;
+  separatorColor?: string;
+  separatorStyle?: "icon" | "text";
+  itemSpacing?: number;
+  // Configurações de Layout
+  maxWidth?: number;
+  overflow?: "hidden" | "visible" | "scroll";
+  shadow?: string;
+  // Configurações de Efeitos
+  hoverEffect?: "none" | "underline" | "background" | "scale" | "opacity";
+  // Configurações de Mapeamento de Rotas (para geração automática)
   routeMapping?: RouteMapping;
   maxItems?: number;
   showRoot?: boolean;
@@ -113,18 +129,20 @@ const defaultBorder: BorderProps = {
   style: "solid",
   color: "#e5e7eb",
   radius: {
-    topLeft: 0,
-    topRight: 0,
-    bottomRight: 0,
-    bottomLeft: 0,
+    topLeft: 8,
+    topRight: 8,
+    bottomRight: 8,
+    bottomLeft: 8,
   },
 };
 
 export default function StaticBreadcrumb({
+  items,
   showHomeIcon = true,
   homeLabel = "Início",
   homeHref = "/",
   separator = "chevron",
+  customSeparator = "/",
   backgroundColor = "transparent",
   textColor = "#6b7280",
   activeColor = "#1f272f",
@@ -132,6 +150,17 @@ export default function StaticBreadcrumb({
   hoverColor = "#1d4ed8",
   fontSize = 14,
   fontWeight = "normal",
+  textAlignment = "left",
+  iconSize = 16,
+  iconColor = "#6b7280",
+  separatorSize = 16,
+  separatorColor = "#6b7280",
+  separatorStyle = "icon",
+  itemSpacing = 8,
+  maxWidth = 0,
+  overflow = "hidden",
+  shadow = "none",
+  hoverEffect = "underline",
   routeMapping = defaultRouteMapping,
   maxItems = 5,
   showRoot = true,
@@ -155,13 +184,19 @@ export default function StaticBreadcrumb({
       .join(" ");
   };
 
-  // Gerar items do breadcrumb dinamicamente baseado na URL atual
+  // Gerar items do breadcrumb dinamicamente baseado na URL atual ou usar items fornecidos
   const breadcrumbItems = useMemo(() => {
-    const items: BreadcrumbItem[] = [];
+    // Se items foram fornecidos, usar eles
+    if (items && items.length > 0) {
+      return items;
+    }
+
+    // Caso contrário, gerar automaticamente baseado na URL
+    const generatedItems: BreadcrumbItem[] = [];
 
     // Adicionar item home se habilitado
     if (showRoot) {
-      items.push({
+      generatedItems.push({
         id: "home",
         label: homeLabel,
         href: homeHref,
@@ -170,7 +205,7 @@ export default function StaticBreadcrumb({
 
     // Se estamos na página home, retornar apenas o item home
     if (pathname === "/" || pathname === homeHref) {
-      return items;
+      return generatedItems;
     }
 
     // Dividir o pathname em segmentos
@@ -191,7 +226,7 @@ export default function StaticBreadcrumb({
       const isLast = index === pathSegments.length - 1;
       const href = !isLast && enableLinks ? currentPath : undefined;
 
-      items.push({
+      generatedItems.push({
         id: `segment-${index}`,
         label,
         href,
@@ -199,15 +234,15 @@ export default function StaticBreadcrumb({
     });
 
     // Limitar o número de items se necessário
-    if (maxItems && items.length > maxItems) {
-      const start = items.slice(0, 1); // Home
-      const end = items.slice(-maxItems + 2); // Últimos items + espaço para "..."
+    if (maxItems && generatedItems.length > maxItems) {
+      const start = generatedItems.slice(0, 1); // Home
+      const end = generatedItems.slice(-maxItems + 2); // Últimos items + espaço para "..."
 
       return [...start, { id: "ellipsis", label: "...", href: undefined }, ...end];
     }
 
-    return items;
-  }, [pathname, homeLabel, homeHref, showRoot, routeMapping, maxItems, enableLinks, formatSegmentLabel]);
+    return generatedItems;
+  }, [pathname, homeLabel, homeHref, showRoot, routeMapping, maxItems, enableLinks, formatSegmentLabel, items]);
 
   // Função para lidar com clique em link
   const handleLinkClick = (href: string) => {
@@ -220,12 +255,49 @@ export default function StaticBreadcrumb({
     }
   };
 
+  // Função para obter estilos de hover
+  const getHoverStyles = () => {
+    switch (hoverEffect) {
+      case "underline":
+        return "hover:underline";
+      case "background":
+        return "hover:bg-gray-100 hover:rounded hover:px-1";
+      case "scale":
+        return "hover:scale-105";
+      case "opacity":
+        return "hover:opacity-70";
+      default:
+        return "";
+    }
+  };
+
   // Renderizar separador
   const renderSeparator = () => {
-    if (separator === "chevron") {
-      return <ChevronRight className="h-4 w-4" style={{ color: textColor }} />;
+    if (separatorStyle === "text" || separator !== "chevron") {
+      const separatorText = separator === "custom" ? customSeparator : separator === "chevron" ? "›" : separator;
+      return (
+        <span
+          style={{
+            color: separatorColor,
+            fontSize: `${separatorSize}px`,
+            margin: `0 ${itemSpacing}px`,
+          }}
+        >
+          {separatorText}
+        </span>
+      );
     }
-    return <span style={{ color: textColor, fontSize: `${fontSize}px` }}>{separator}</span>;
+
+    return (
+      <ChevronRight
+        style={{
+          color: separatorColor,
+          width: `${separatorSize}px`,
+          height: `${separatorSize}px`,
+          margin: `0 ${itemSpacing}px`,
+        }}
+      />
+    );
   };
 
   if (hidden) return null;
@@ -253,16 +325,22 @@ export default function StaticBreadcrumb({
       : "0px",
   };
 
+  const containerStyle = {
+    backgroundColor: backgroundColor === "transparent" ? "transparent" : backgroundColor,
+    boxShadow: shadow,
+    maxWidth: maxWidth > 0 ? `${maxWidth}px` : "none",
+    overflow,
+    justifyContent: textAlignment === "center" ? "center" : textAlignment === "right" ? "flex-end" : "flex-start",
+    ...borderStyle,
+    ...marginStyle,
+    ...paddingStyle,
+    ...(style || {}),
+  };
+
   return (
     <motion.nav
       className={`flex items-center static-breadcrumb ${customClasses}`}
-      style={{
-        backgroundColor,
-        ...marginStyle,
-        ...paddingStyle,
-        ...borderStyle,
-        ...(style || {}),
-      }}
+      style={containerStyle}
       id={id}
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
@@ -270,10 +348,18 @@ export default function StaticBreadcrumb({
     >
       {/* Ícone Home */}
       {showHomeIcon && (
-        <motion.div className="flex items-center mr-2" whileHover={{ scale: 1.1 }} transition={{ duration: 0.2 }}>
+        <motion.div
+          className="flex items-center cursor-pointer"
+          style={{ marginRight: `${itemSpacing}px` }}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.2 }}
+        >
           <Home
-            className="h-4 w-4 cursor-pointer"
-            style={{ color: pathname === homeHref ? activeColor : linkColor }}
+            style={{
+              color: pathname === homeHref ? activeColor : iconColor,
+              width: `${iconSize}px`,
+              height: `${iconSize}px`,
+            }}
             onClick={() => handleLinkClick(homeHref)}
           />
         </motion.div>
@@ -288,20 +374,21 @@ export default function StaticBreadcrumb({
         return (
           <div key={item.id} className="flex items-center">
             {/* Separador (não mostrar antes do primeiro item ou se showHomeIcon está ativo) */}
-            {index > 0 || (showHomeIcon && breadcrumbItems.length > 0) ? <div className="mx-2 flex items-center">{renderSeparator()}</div> : null}
+            {(index > 0 || (showHomeIcon && breadcrumbItems.length > 0)) && <div className="flex items-center">{renderSeparator()}</div>}
 
             {/* Item do Breadcrumb */}
             <motion.span
-              className={`${isLast ? "font-medium" : ""} ${hasLink ? "cursor-pointer hover:underline" : ""} ${isEllipsis ? "select-none" : ""}`}
+              className={`transition-colors ${isLast ? "font-medium" : ""} ${hasLink ? "cursor-pointer" : ""} ${hasLink ? getHoverStyles() : ""} ${
+                isEllipsis ? "select-none" : ""
+              }`}
               style={{
                 color: isLast ? activeColor : hasLink ? linkColor : textColor,
                 fontSize: `${fontSize}px`,
                 fontWeight: isLast ? "medium" : fontWeight,
-                transition: "color 0.2s ease",
               }}
               onClick={() => hasLink && handleLinkClick(item.href!)}
               onMouseEnter={(e) => {
-                if (hasLink) {
+                if (hasLink && hoverEffect !== "none") {
                   e.currentTarget.style.color = hoverColor;
                 }
               }}
@@ -310,7 +397,7 @@ export default function StaticBreadcrumb({
                   e.currentTarget.style.color = linkColor;
                 }
               }}
-              whileHover={hasLink ? { scale: 1.05 } : {}}
+              whileHover={hasLink ? { scale: hoverEffect === "scale" ? 1.05 : 1 } : {}}
               transition={{ duration: 0.2 }}
             >
               {item.label}

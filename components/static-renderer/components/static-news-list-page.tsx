@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Filter, Calendar, User, Eye, Heart, MessageCircle, Tag, Clock, ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
-import { NewsService, type News } from "@/services/news";
+import { NewsService, type News, type NewsAuthor, type NewsCoverImage } from "@/services/news";
 import { NewsCommentsService } from "@/services/news-comments";
 import { NewsLikesService } from "@/services/news-likes";
 
@@ -127,7 +127,7 @@ export default function StaticNewsListPage({
   loadingText = "Carregando notícias...",
   errorText = "Erro ao carregar notícias. Tente novamente.",
   emptyText = "Nenhuma notícia encontrada",
-  statusFilter = "published",
+  statusFilter = "all",
   hidden = false,
   id,
   style,
@@ -178,7 +178,7 @@ export default function StaticNewsListPage({
           likesCount: likes.length,
           viewsCount: 0, // Campo não existe na interface, usar 0
           formattedDate: formatDate(newsItem.published_at || newsItem.createdAt),
-          imageUrl: newsItem.cover_image_id ? `/api/files/${newsItem.cover_image_id}` : undefined,
+          imageUrl: newsItem.cover_image?.url, // Usar a URL direta do campo aninhado
         };
 
         processedNews.push(processed);
@@ -191,7 +191,7 @@ export default function StaticNewsListPage({
           likesCount: 0,
           viewsCount: 0,
           formattedDate: formatDate(newsItem.published_at || newsItem.createdAt),
-          imageUrl: newsItem.cover_image_id ? `/api/files/${newsItem.cover_image_id}` : undefined,
+          imageUrl: newsItem.cover_image?.url, // Usar a URL direta do campo aninhado
         });
       }
     }
@@ -377,10 +377,10 @@ export default function StaticNewsListPage({
         )}
 
         <div className="flex flex-wrap items-center gap-4 text-xs" style={{ color: textColor }}>
-          {showAuthor && (
+          {showAuthor && item.author && (
             <div className="flex items-center gap-2">
               <User size={12} />
-              <span className="font-medium">Autor</span>
+              <span className="font-medium">{item.author.name}</span>
             </div>
           )}
 

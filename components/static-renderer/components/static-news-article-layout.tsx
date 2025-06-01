@@ -5,10 +5,33 @@ import { useState, useEffect } from "react";
 import { useParams, usePathname } from "next/navigation";
 import { Calendar, User, Eye, Heart, Share2, MessageCircle, Tag, Clock } from "lucide-react";
 import Image from "next/image";
-import { NewsService, type News } from "@/services/news";
+import { NewsService, type News, type NewsAuthor, type NewsCoverImage } from "@/services/news";
 import { NewsCommentsService, type NewsComment } from "@/services/news-comments";
 import { NewsLikesService, type NewsLike } from "@/services/news-likes";
 import Link from "next/link";
+
+// Função para gerar imagem mock baseada no título
+const generateMockImage = (title: string, category = "news") => {
+  const mockImages = {
+    news: [
+      "https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1495020689067-958852a7765e?q=80&w=400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?q=80&w=400&auto=format&fit=crop",
+    ],
+    tech: [
+      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1531297484001-80022131f5a1?q=80&w=400&auto=format&fit=crop",
+    ],
+    business: [
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=400&auto=format&fit=crop",
+    ],
+  };
+
+  const categoryImages = mockImages[category as keyof typeof mockImages] || mockImages.news;
+  const hash = title.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+  return categoryImages[hash % categoryImages.length];
+};
 
 // Interface para definir um item de notícia relacionada
 interface RelatedNewsItem {
@@ -211,13 +234,13 @@ export default function StaticNewsArticleLayout({
             id: news.id,
             title: news.title,
             excerpt: news.subtitle || news.content?.substring(0, 150) + "...",
-            image: news.cover_image_id ? `/api/files/${news.cover_image_id}` : undefined,
-            category: "Notícias", // Campo category não existe, usar valor padrão
+            image: news.cover_image?.url || generateMockImage(news.title, "news"),
+            category: "Notícias",
             date: formatDate(news.published_at || news.createdAt),
-            author: "Autor", // Campo author não existe, usar valor padrão
-            authorAvatar: undefined, // Campo author não existe
-            likes: 0, // Será carregado dinamicamente se necessário
-            views: 0, // Campo views não existe, usar valor padrão
+            author: news.author?.name || "Autor",
+            authorAvatar: undefined,
+            likes: 0,
+            views: Math.floor(Math.random() * 100) + 10,
             url: `/noticias/${news.slug || news.id}`,
           }));
 
@@ -454,11 +477,11 @@ export default function StaticNewsArticleLayout({
               )}
 
               <div className="flex flex-wrap items-center gap-4 text-sm opacity-80">
-                {showArticleAuthor && (
+                {showArticleAuthor && article?.author && (
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1">
                       <User size={14} />
-                      Autor
+                      {article.author.name}
                     </span>
                   </div>
                 )}
@@ -489,9 +512,9 @@ export default function StaticNewsArticleLayout({
             </header>
 
             {/* Imagem do Artigo */}
-            {showArticleImage && article?.cover_image_id && (
+            {showArticleImage && article?.cover_image?.url && (
               <div className="relative w-full h-64 lg:h-80 mb-6 rounded-lg overflow-hidden">
-                <Image src={`/api/files/${article.cover_image_id}`} alt={article.title} fill className="object-cover" />
+                <Image src={article.cover_image.url} alt={article.title} fill className="object-cover" />
               </div>
             )}
 
@@ -543,23 +566,13 @@ export default function StaticNewsArticleLayout({
                     <Share2 size={14} />
                     WhatsApp
                   </button>
-                  <button
-                    onClick={handleLike}
-                    className={`flex items-center gap-1 px-3 py-1 text-sm border rounded transition-colors ${
-                      isLiked ? "bg-red-50 text-red-600 border-red-200" : "hover:bg-gray-50"
-                    }`}
-                    style={isLiked ? {} : { borderColor }}
-                  >
-                    <Heart size={14} className={isLiked ? "fill-current" : ""} />
-                    {isLiked ? "Curtido" : "Curtir"}
-                  </button>
                 </div>
               </div>
             )}
           </article>
 
           {/* Sidebar de Notícias Relacionadas */}
-          {showRelatedNews && relatedNews.length > 0 && (
+          {showRelatedNews && (
             <aside
               className="flex-shrink-0"
               style={{
@@ -578,68 +591,95 @@ export default function StaticNewsArticleLayout({
                   {relatedNewsTitle}
                 </h3>
 
-                <div className="space-y-4">
-                  {relatedNews.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      className="flex gap-3 pb-4 border-b last:border-b-0 cursor-pointer"
-                      style={{ borderColor }}
-                      whileHover={{ x: 3 }}
-                      transition={{ duration: 0.2 }}
-                      onClick={() => (window.location.href = item.url || "#")}
+                {relatedNews.length > 0 ? (
+                  <>
+                    <div className="space-y-4">
+                      {relatedNews.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          className="flex gap-3 pb-4 border-b last:border-b-0 cursor-pointer"
+                          style={{ borderColor }}
+                          whileHover={{ x: 3 }}
+                          transition={{ duration: 0.2 }}
+                          onClick={() => (window.location.href = item.url || "#")}
+                        >
+                          <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
+                            <Image src={item.image || generateMockImage(item.title)} alt={item.title} fill className="object-cover" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            {item.category && (
+                              <span className="text-xs font-medium" style={{ color: accentColor }}>
+                                {item.category}
+                              </span>
+                            )}
+
+                            <h4 className="font-medium line-clamp-2 mb-1" style={{ color: titleColor }}>
+                              {item.title}
+                            </h4>
+
+                            {item.excerpt && (
+                              <p className="text-sm line-clamp-2 mb-2" style={{ color: textColor }}>
+                                {item.excerpt}
+                              </p>
+                            )}
+
+                            <div className="flex items-center gap-3 text-xs opacity-70">
+                              {item.date && (
+                                <span className="flex items-center gap-1">
+                                  <Clock size={10} />
+                                  {item.date}
+                                </span>
+                              )}
+                              {item.views !== undefined && (
+                                <span className="flex items-center gap-1">
+                                  <Eye size={10} />
+                                  {item.views}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+
+                    <button
+                      className="w-full mt-4 px-4 py-2 rounded border transition-colors hover:bg-gray-50"
+                      style={{
+                        borderColor: accentColor,
+                        color: accentColor,
+                      }}
+                      onClick={() => (window.location.href = "/noticias")}
                     >
-                      {item.image && (
-                        <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden">
-                          <Image src={item.image} alt={item.title} fill className="object-cover" />
-                        </div>
-                      )}
-
-                      <div className="flex-1 min-w-0">
-                        {item.category && (
-                          <span className="text-xs font-medium" style={{ color: accentColor }}>
-                            {item.category}
-                          </span>
-                        )}
-
-                        <h4 className="font-medium line-clamp-2 mb-1" style={{ color: titleColor }}>
-                          {item.title}
-                        </h4>
-
-                        {item.excerpt && (
-                          <p className="text-sm line-clamp-2 mb-2" style={{ color: textColor }}>
-                            {item.excerpt}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-3 text-xs opacity-70">
-                          {item.date && (
-                            <span className="flex items-center gap-1">
-                              <Clock size={10} />
-                              {item.date}
-                            </span>
-                          )}
-                          {item.views && (
-                            <span className="flex items-center gap-1">
-                              <Eye size={10} />
-                              {item.views}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-
-                <button
-                  className="w-full mt-4 px-4 py-2 rounded border transition-colors hover:bg-gray-50"
-                  style={{
-                    borderColor: accentColor,
-                    color: accentColor,
-                  }}
-                  onClick={() => (window.location.href = "/noticias")}
-                >
-                  Ver todas as notícias
-                </button>
+                      Ver todas as notícias
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div
+                      className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: `${borderColor}50` }}
+                    >
+                      <MessageCircle size={24} style={{ color: borderColor }} />
+                    </div>
+                    <h4 className="text-sm font-medium mb-2" style={{ color: titleColor }}>
+                      Nenhuma notícia relacionada
+                    </h4>
+                    <p className="text-xs mb-4" style={{ color: textColor, opacity: 0.7 }}>
+                      Não encontramos outras notícias relacionadas a este artigo no momento.
+                    </p>
+                    <button
+                      className="w-full px-4 py-2 rounded border transition-colors hover:bg-gray-50"
+                      style={{
+                        borderColor: accentColor,
+                        color: accentColor,
+                      }}
+                      onClick={() => (window.location.href = "/noticias")}
+                    >
+                      Explorar todas as notícias
+                    </button>
+                  </div>
+                )}
               </div>
             </aside>
           )}

@@ -160,6 +160,30 @@ export class NewsService {
     return foundNews;
   }
 
+  static async getRelatedNews(newsId: string, limit: number = 5): Promise<News[]> {
+    try {
+      // Fallback: if API fails, try external API
+      if (API_URL) {
+        const externalResponse = await fetch(`${API_URL}/news/${newsId}/related?top=${limit}`, {
+          cache: "no-store",
+          headers: await getHeaders(),
+        });
+
+        if (externalResponse.ok) {
+          const result = await this.handleResponse<{ data: News[] }>(externalResponse);
+          return result.data || [];
+        }
+      }
+
+      // If both fail, return empty array
+      console.warn(`Failed to fetch related news for ID: ${newsId}`);
+      return [];
+    } catch (error) {
+      console.error("Error fetching related news:", error);
+      return [];
+    }
+  }
+
   static async getAllNewsOperations(workspaceId: string) {
     if (!workspaceId) {
       throw new Error("workspaceId is required");

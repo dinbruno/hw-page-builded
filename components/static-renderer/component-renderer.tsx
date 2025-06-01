@@ -40,6 +40,7 @@ import {
   StaticCardGrid,
   StaticEnhancedImageGallery,
   StaticGalleryTemplate,
+  StaticNewsListPage,
   StaticNewsWebpart,
   StaticRichText,
   StaticTabPanel,
@@ -83,6 +84,7 @@ const componentMap: Record<string, any> = {
   NewsWebpart: StaticNewsWebpart,
   TabPanel: StaticTabPanel,
   Breadcrumb: StaticBreadcrumb,
+  NewsListPageWithData: StaticNewsListPage,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
