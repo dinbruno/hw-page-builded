@@ -580,22 +580,18 @@ export default function StaticBanner({
                     </motion.p>
 
                     {(slides[currentSlide].showButton ?? showButton) && (
-                      <button
-                        onClick={() => handleButtonClick(slides[currentSlide].buttonUrl)}
-                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                        style={{
-                          backgroundColor: slides[currentSlide].buttonColor || buttonColor,
-                          color: slides[currentSlide].buttonTextColor || buttonTextColor,
-                          alignSelf:
-                            slides[currentSlide].alignment === "center"
-                              ? "center"
-                              : slides[currentSlide].alignment === "right"
-                              ? "flex-end"
-                              : "flex-start",
-                        }}
-                      >
-                        {slides[currentSlide].buttonText}
-                      </button>
+                      <div className="w-full">
+                        <button
+                          onClick={() => handleButtonClick(slides[currentSlide].buttonUrl)}
+                          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                          style={{
+                            backgroundColor: slides[currentSlide].buttonColor || buttonColor,
+                            color: slides[currentSlide].buttonTextColor || buttonTextColor,
+                          }}
+                        >
+                          {slides[currentSlide].buttonText}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -658,17 +654,18 @@ export default function StaticBanner({
               </motion.p>
 
               {(slides[0].showButton ?? showButton) && (
-                <button
-                  onClick={() => handleButtonClick(buttonUrl)}
-                  className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                  style={{
-                    backgroundColor: buttonColor,
-                    color: buttonTextColor,
-                    alignSelf: slides[0].alignment === "center" ? "center" : slides[0].alignment === "right" ? "flex-end" : "flex-start",
-                  }}
-                >
-                  {buttonText}
-                </button>
+                <div className="w-full">
+                  <button
+                    onClick={() => handleButtonClick(buttonUrl)}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{
+                      backgroundColor: buttonColor,
+                      color: buttonTextColor,
+                    }}
+                  >
+                    {buttonText}
+                  </button>
+                </div>
               )}
             </div>
           </div>

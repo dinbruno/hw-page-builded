@@ -12,6 +12,84 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Toaster } from "@/components/ui/toaster";
 
+// Safe Logo component with multiple fallbacks
+const SafeLogo = ({
+  workspaceLogoUrl,
+  workspaceName,
+  width = 120,
+  height = 120,
+  className = "h-[80px] w-auto object-contain",
+}: {
+  workspaceLogoUrl?: string;
+  workspaceName?: string;
+  width?: number;
+  height?: number;
+  className?: string;
+}) => {
+  const [currentSrc, setCurrentSrc] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
+
+  // Define fallback sources in order of preference
+  const fallbackSources = [workspaceLogoUrl, "/Logo.png", "/logo.png", "/assets/logo.png", "/images/logo.png", "/placeholder.svg"].filter(
+    Boolean
+  ) as string[];
+
+  useEffect(() => {
+    if (workspaceLogoUrl) {
+      setCurrentSrc(workspaceLogoUrl);
+      setHasError(false);
+    } else {
+      setCurrentSrc("/Logo.png");
+      setHasError(false);
+    }
+  }, [workspaceLogoUrl]);
+
+  const handleImageError = () => {
+    if (!currentSrc) return;
+
+    const currentIndex = fallbackSources.indexOf(currentSrc);
+    const nextIndex = currentIndex + 1;
+
+    if (nextIndex < fallbackSources.length) {
+      setCurrentSrc(fallbackSources[nextIndex]);
+    } else {
+      // All image sources failed, show SVG fallback
+      setHasError(true);
+    }
+  };
+
+  // SVG Logo fallback
+  const SVGLogo = () => (
+    <div
+      className={`flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg ${className}`}
+      style={{ width: width, height: height }}
+    >
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white">
+        <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 12V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M22 7L12 12L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+
+  if (hasError || !currentSrc) {
+    return <SVGLogo />;
+  }
+
+  return (
+    <Image
+      src={currentSrc}
+      alt={`Logo de ${workspaceName || "empresa"}`}
+      width={width}
+      height={height}
+      className={className}
+      onError={handleImageError}
+      onLoad={() => setHasError(false)}
+      priority
+    />
+  );
+};
+
 // Animated background component
 const AnimatedBackground = ({ primaryColor, secondaryColor }: { primaryColor: string; secondaryColor: string }) => {
   return (
@@ -320,17 +398,7 @@ export function LoginView(props: any) {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                {workspaceInfo.workspace?.favicon_file?.url ? (
-                  <Image
-                    src={workspaceInfo.workspace.favicon_file.url || "/placeholder.svg"}
-                    alt={`Logo de ${workspaceInfo.workspace.name || "empresa"}`}
-                    width={80}
-                    height={80}
-                    className="w-[80px] h-auto"
-                  />
-                ) : (
-                  <Image src="/Logo.png" alt="Logo da empresa" width={80} height={80} className="w-[80px] h-auto" />
-                )}
+                <SafeLogo workspaceLogoUrl={workspaceInfo.workspace?.favicon_file?.url} workspaceName={workspaceInfo.workspace?.name} />
               </motion.div>
 
               <div className="relative flex justify-center mb-8">
@@ -440,17 +508,7 @@ export function LoginView(props: any) {
               transition={{ delay: 0.1, type: "spring", stiffness: 300 }}
               className="relative"
             >
-              {workspaceInfo.workspace?.favicon_file?.url ? (
-                <Image
-                  src={workspaceInfo.workspace.favicon_file.url || "/placeholder.svg"}
-                  alt={`Logo de ${workspaceInfo.workspace.name || "empresa"}`}
-                  width={120}
-                  height={120}
-                  className="h-[80px] w-auto object-contain"
-                />
-              ) : (
-                <Image src="/Logo.png" alt="Logo da empresa" width={200} height={200} className="h-[80px] w-auto object-cover" />
-              )}
+              <SafeLogo workspaceLogoUrl={workspaceInfo.workspace?.favicon_file?.url} workspaceName={workspaceInfo.workspace?.name} />
             </motion.div>
           </div>
 

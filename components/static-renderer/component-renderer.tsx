@@ -109,9 +109,7 @@ export function ComponentRenderer({ content }: { content: any }) {
     }
   };
 
-  console.log("=== DEBUG DA ESTRUTURA DE CONTEÚDO ===");
   debugContent("ROOT");
-  console.log("=====================================");
 
   const renderNode = (nodeId: string) => {
     const node = content[nodeId];
