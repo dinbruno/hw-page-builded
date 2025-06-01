@@ -433,8 +433,7 @@ export default function StaticNewsArticleLayout({
                 {showArticleStats && (
                   <>
                     <span className="flex items-center gap-1">
-                      <Eye size={14} />
-                      {article?.views || 0} visualizações
+                      <Eye size={14} />0 visualizações
                     </span>
                     <span className="flex items-center gap-1">
                       <Heart size={14} />
@@ -466,9 +465,9 @@ export default function StaticNewsArticleLayout({
             </div>
 
             {/* Tags do Artigo */}
-            {showArticleTags && article?.tags && article.tags.length > 0 && (
+            {showArticleTags && (
               <div className="flex flex-wrap gap-2 mb-6">
-                {article.tags.map((tag, index) => (
+                {(article as any)?.tags?.map((tag: string, index: number) => (
                   <span
                     key={index}
                     className="px-3 py-1 text-sm rounded-full border"
@@ -479,7 +478,7 @@ export default function StaticNewsArticleLayout({
                   >
                     #{tag}
                   </span>
-                ))}
+                )) || <span className="text-sm text-gray-500">Nenhuma tag disponível</span>}
               </div>
             )}
 

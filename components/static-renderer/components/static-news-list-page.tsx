@@ -636,7 +636,7 @@ export default function StaticNewsListPage({
               {searchTerm && (
                 <span>
                   {" "}
-                  para <span className="font-semibold">"{searchTerm}"</span>
+                  para <span className="font-semibold">&quot;{searchTerm}&quot;</span>
                 </span>
               )}
               {selectedCategory !== "Todas" && (

@@ -131,7 +131,20 @@ interface TabPanelProps {
   [key: string]: any;
 }
 
-export const StaticTabPanel = ({
+// Wrapper component to handle CraftJS context conditionally
+const TabPanelWithEditor = (props: TabPanelProps) => {
+  const {
+    connectors: { connect, drag },
+  } = useNode();
+  const { selected } = useNode((node) => ({
+    selected: node.events.selected,
+  }));
+
+  return <StaticTabPanelCore {...props} isInEditor={true} connectors={{ connect, drag }} selected={selected} />;
+};
+
+// Core component without CraftJS dependencies
+const StaticTabPanelCore = ({
   tabs = [],
   activeTab,
   position = "top",
@@ -199,26 +212,16 @@ export const StaticTabPanel = ({
   isEditable = false,
   linkedNodes,
   id,
+  // New props for handling editor context
+  isInEditor = false,
+  connectors = null,
+  selected = false,
   ...otherProps
-}: TabPanelProps) => {
-  // Verificar se está no contexto do CraftJS
-  let isInEditor = false;
-  let connectors: any = null;
-  let selected = false;
-
-  try {
-    const { connectors: nodeConnectors } = useNode();
-    const { selected: nodeSelected } = useNode((node) => ({
-      selected: node.events.selected,
-    }));
-    isInEditor = true;
-    connectors = nodeConnectors;
-    selected = nodeSelected;
-  } catch {
-    // Não está no contexto do Editor
-    isInEditor = false;
-  }
-
+}: TabPanelProps & {
+  isInEditor?: boolean;
+  connectors?: any;
+  selected?: boolean;
+}) => {
   const [activeTabId, setActiveTabId] = useState(activeTab || tabs[0]?.id || "");
 
   const containerStyle = {
@@ -640,6 +643,23 @@ export const StaticTabPanel = ({
       `}</style>
     </motion.div>
   );
+};
+
+// Main component that handles CraftJS detection
+export const StaticTabPanel = (props: TabPanelProps) => {
+  // Simple detection - if we're in editor context, use the wrapper
+  try {
+    // This will work in editor context
+    const isValidCraftContext = typeof window !== "undefined" && (window as any).__craftjs_editor__;
+    if (isValidCraftContext) {
+      return <TabPanelWithEditor {...props} />;
+    }
+  } catch {
+    // Fallback to static version
+  }
+
+  // Use static version by default
+  return <StaticTabPanelCore {...props} />;
 };
 
 export const StaticTabPanelSettings = () => {

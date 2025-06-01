@@ -221,8 +221,6 @@ export default function StaticCalendar({
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
-  if (hidden) return null;
-
   const getDaysInMonth = useCallback(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -252,6 +250,8 @@ export default function StaticCalendar({
     },
     [events]
   );
+
+  if (hidden) return null;
 
   const goToPreviousMonth = () => {
     setCurrentDate((prev) => {
