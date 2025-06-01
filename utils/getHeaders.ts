@@ -18,17 +18,39 @@ export function getHeaders(serverToken?: string, serverTenantId?: string): Heade
     return headers;
   }
 
+  // Check if we're in a build environment (SSG/SSR without client context)
+  if (typeof window === "undefined") {
+    console.warn("Build environment detected - usando headers básicos");
+    return {
+      "Content-Type": "application/json",
+    };
+  }
+
   // Client-side scenario
   let token;
   try {
     token = getAuthToken();
   } catch (error) {
     console.error("Erro ao obter token do cliente:", error);
+    // Durante development/build, pode não haver token - retornar headers básicos
+    if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production") {
+      console.warn("Ambiente de desenvolvimento/build - usando headers básicos");
+      return {
+        "Content-Type": "application/json",
+      };
+    }
     throw new Error("Falha ao obter token de autenticação do cliente");
   }
 
   if (!token) {
     console.error("Token do cliente não encontrado");
+    // Durante development/build, pode não haver token - retornar headers básicos
+    if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "production") {
+      console.warn("Token não encontrado - usando headers básicos");
+      return {
+        "Content-Type": "application/json",
+      };
+    }
     throw new Error("User token is required for API operations");
   }
 

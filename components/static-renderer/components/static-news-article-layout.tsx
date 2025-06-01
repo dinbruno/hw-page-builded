@@ -8,6 +8,7 @@ import Image from "next/image";
 import { NewsService, type News } from "@/services/news";
 import { NewsCommentsService, type NewsComment } from "@/services/news-comments";
 import { NewsLikesService, type NewsLike } from "@/services/news-likes";
+import Link from "next/link";
 
 // Interface para definir um item de notícia relacionada
 interface RelatedNewsItem {
@@ -96,6 +97,22 @@ const defaultBorder: BorderProps = {
   },
 };
 
+// Componente cliente para botão de retry
+const RetryButton = ({ onRetry, accentColor, backgroundColor }: { onRetry: () => void; accentColor: string; backgroundColor: string }) => {
+  return (
+    <button
+      onClick={onRetry}
+      className="mt-4 px-4 py-2 rounded transition-colors"
+      style={{
+        backgroundColor: accentColor,
+        color: backgroundColor,
+      }}
+    >
+      Tentar novamente
+    </button>
+  );
+};
+
 export default function StaticNewsArticleLayout({
   articleWidth = 70,
   gap = 32,
@@ -171,41 +188,60 @@ export default function StaticNewsArticleLayout({
 
       setArticle(foundArticle);
 
-      // Carregar dados paralelos
-      const [commentsData, likesData, allNews] = await Promise.all([
-        NewsCommentsService.getByNewsId(foundArticle.id),
-        NewsLikesService.getByNewsId(foundArticle.id),
-        NewsService.getAll(),
-      ]);
+      // Carregar dados paralelos com fallbacks
+      try {
+        const [commentsData, likesData, allNews] = await Promise.all([
+          NewsCommentsService.getByNewsId(foundArticle.id).catch(() => []),
+          NewsLikesService.getByNewsId(foundArticle.id).catch(() => []),
+          NewsService.getAll().catch(() => []),
+        ]);
 
-      setComments(commentsData);
-      setLikes(likesData);
+        setComments(commentsData);
+        setLikes(likesData);
 
-      // Verificar se o usuário já curtiu (simulação - em produção usar ID do usuário real)
-      const userLiked = likesData.some((like) => like.collab_id === "current-user-id");
-      setIsLiked(userLiked);
+        // Verificar se o usuário já curtiu (simulação - em produção usar ID do usuário real)
+        const userLiked = likesData.some((like) => like.collab_id === "current-user-id");
+        setIsLiked(userLiked);
 
-      // Carregar notícias relacionadas (excluindo a atual)
-      const related = allNews
-        .filter((news) => news.id !== foundArticle.id)
-        .slice(0, maxRelatedNews)
-        .map((news) => ({
-          id: news.id,
-          title: news.title,
-          excerpt: news.subtitle || news.content?.substring(0, 150) + "...",
-          image: news.cover_image_id ? `/api/files/${news.cover_image_id}` : undefined,
-          category: "Notícias", // Campo category não existe, usar valor padrão
-          date: formatDate(news.published_at || news.createdAt),
-          author: "Autor", // Campo author não existe, usar valor padrão
-          authorAvatar: undefined, // Campo author não existe
-          likes: 0, // Será carregado dinamicamente se necessário
-          views: 0, // Campo views não existe, usar valor padrão
-          url: `/noticias/${news.slug || news.id}`,
-        }));
+        // Carregar notícias relacionadas (excluindo a atual)
+        const related = allNews
+          .filter((news) => news.id !== foundArticle.id)
+          .slice(0, maxRelatedNews)
+          .map((news) => ({
+            id: news.id,
+            title: news.title,
+            excerpt: news.subtitle || news.content?.substring(0, 150) + "...",
+            image: news.cover_image_id ? `/api/files/${news.cover_image_id}` : undefined,
+            category: "Notícias", // Campo category não existe, usar valor padrão
+            date: formatDate(news.published_at || news.createdAt),
+            author: "Autor", // Campo author não existe, usar valor padrão
+            authorAvatar: undefined, // Campo author não existe
+            likes: 0, // Será carregado dinamicamente se necessário
+            views: 0, // Campo views não existe, usar valor padrão
+            url: `/noticias/${news.slug || news.id}`,
+          }));
 
-      setRelatedNews(related);
+        setRelatedNews(related);
+      } catch (dataErr) {
+        console.warn("Erro ao carregar dados adicionais:", dataErr);
+        // Continue com dados básicos mesmo se dados adicionais falharem
+        setComments([]);
+        setLikes([]);
+        setRelatedNews([]);
+      }
     } catch (err) {
       console.error("Erro ao carregar dados da notícia:", err);
+
+      // Durante SSG, se há erro de token, definir estado vazio em vez de erro
+      if (typeof window === "undefined" && err instanceof Error && err.message.includes("token")) {
+        setLoading(false);
+        setArticle(null);
+        setComments([]);
+        setLikes([]);
+        setRelatedNews([]);
+        return;
+      }
+
       setError(errorText);
     } finally {
       setLoading(false);
@@ -348,16 +384,20 @@ export default function StaticNewsArticleLayout({
       >
         <div className="text-center">
           <p style={{ color: textColor, fontSize: "18px" }}>{error}</p>
-          <button
-            onClick={() => slug && loadArticleData(slug)}
-            className="mt-4 px-4 py-2 rounded transition-colors"
-            style={{
-              backgroundColor: accentColor,
-              color: backgroundColor,
-            }}
-          >
-            Tentar novamente
-          </button>
+          {typeof window !== "undefined" ? (
+            <RetryButton onRetry={() => slug && loadArticleData(slug)} accentColor={accentColor} backgroundColor={backgroundColor} />
+          ) : (
+            <Link
+              href="/noticias"
+              className="mt-4 px-4 py-2 rounded transition-colors inline-block"
+              style={{
+                backgroundColor: accentColor,
+                color: backgroundColor,
+              }}
+            >
+              Voltar às notícias
+            </Link>
+          )}
         </div>
       </motion.div>
     );

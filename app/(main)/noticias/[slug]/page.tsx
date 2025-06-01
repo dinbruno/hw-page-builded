@@ -52,6 +52,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 // Função para gerar caminhos estáticos (opcional para melhor performance)
 export async function generateStaticParams() {
   try {
+    // Durante o build, pode não haver token de usuário disponível
+    // Neste caso, retornamos uma lista vazia para evitar erro no build
     const newsData = await NewsService.getAll();
 
     return newsData
@@ -61,6 +63,8 @@ export async function generateStaticParams() {
       }));
   } catch (error) {
     console.error("Erro ao gerar caminhos estáticos:", error);
+    // Retornar lista vazia em caso de erro para não quebrar o build
+    // As páginas serão geradas sob demanda (ISR)
     return [];
   }
 }
