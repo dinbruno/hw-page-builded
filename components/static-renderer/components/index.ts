@@ -1,6 +1,10 @@
 // Static renderer components
 export { default as StaticBanner } from "./static-banner";
 export { default as StaticCardCarousel } from "./static-card-carousel";
+export { default as StaticBreadcrumb } from "./static-breadcrumb";
+export { default as StaticNewsArticleLayout } from "./static-news-article-layout";
+export { default as StaticNewsListPage } from "./static-news-list-page";
+export { default as StaticNewsWebpart } from "./static-news-webpart";
 export { default as StaticNavigationBar } from "./static-navigation-bar";
 export { default as StaticVideo } from "./static-video";
 export { default as StaticRichText } from "./static-rich-text";
@@ -34,3 +38,4 @@ export { default as StaticColumn } from "./static-column";
 export { default as StaticCollaboratorsList } from "./static-collaborators-list";
 export { default as StaticButton } from "./static-button";
 export { default as StaticBirthdayList } from "./static-birthday-list";
+export { default as StaticTabPanel } from "./static-tab-panel";

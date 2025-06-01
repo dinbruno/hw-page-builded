@@ -34,7 +34,17 @@ import {
   StaticSidebarMainLayout,
   StaticThreeColumnsWideCenter,
 } from "./components/static-responsive-layouts";
-import { StaticCardCarousel, StaticCardGrid, StaticEnhancedImageGallery, StaticGalleryTemplate, StaticRichText, StaticVideo } from "./components";
+import {
+  StaticBreadcrumb,
+  StaticCardCarousel,
+  StaticCardGrid,
+  StaticEnhancedImageGallery,
+  StaticGalleryTemplate,
+  StaticNewsWebpart,
+  StaticRichText,
+  StaticTabPanel,
+  StaticVideo,
+} from "./components";
 
 const componentMap: Record<string, any> = {
   Banner: StaticBanner,
@@ -70,6 +80,9 @@ const componentMap: Record<string, any> = {
   GalleryTemplate: StaticGalleryTemplate,
   CardGrid: StaticCardGrid,
   CardCarousel: StaticCardCarousel,
+  NewsWebpart: StaticNewsWebpart,
+  TabPanel: StaticTabPanel,
+  Breadcrumb: StaticBreadcrumb,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
@@ -163,6 +176,50 @@ export function ComponentRenderer({ content }: { content: any }) {
     const StaticComponent = componentMap[componentType];
 
     if (StaticComponent) {
+      // Special handling for TabPanel (deve vir antes dos layouts)
+      if (componentType === "TabPanel") {
+        const layoutStyles = extractLayoutStyles(node.props);
+        console.log("Renderizando TabPanel:", { nodeId, linkedNodes: node.linkedNodes });
+
+        // If we have linkedNodes, pass them through
+        if (node.linkedNodes && Object.keys(node.linkedNodes).length > 0) {
+          const tabProps: Record<string, React.ReactNode> = {};
+
+          // Process each linked node (tab content)
+          Object.entries(node.linkedNodes).forEach(([linkKey, linkedNodeId]) => {
+            const linkedNode = content[linkedNodeId as string];
+            if (linkedNode) {
+              // Render the content of each linked node
+              let linkedNodeContent;
+
+              // If the linked node has children, render them
+              if (linkedNode.nodes && linkedNode.nodes.length > 0) {
+                linkedNodeContent = linkedNode.nodes.map((childId: string) => renderNode(childId));
+              } else {
+                // Otherwise, just render the node itself
+                linkedNodeContent = renderNode(linkedNodeId as string);
+              }
+
+              tabProps[linkedNodeId as string] = linkedNodeContent;
+            }
+          });
+
+          console.log("TabPanel props populated:", Object.keys(tabProps));
+
+          // Return the component with all necessary props
+          return (
+            <StaticComponent
+              key={nodeId}
+              {...node.props}
+              style={{ ...(node.props?.style || {}), ...layoutStyles }}
+              id={nodeId}
+              linkedNodes={node.linkedNodes}
+              {...tabProps}
+            />
+          );
+        }
+      }
+
       // Special handling for layout components
       if (
         componentType === "TwoEqualColumns" ||
