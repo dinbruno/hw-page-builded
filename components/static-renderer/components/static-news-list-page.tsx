@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Filter, Calendar, User, Eye, Heart, MessageCircle, Tag, Clock, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Search, Filter, Calendar, User, Heart, MessageCircle, Tag, Clock, ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { NewsService, type News, type NewsAuthor, type NewsCoverImage } from "@/services/news";
 import { NewsCommentsService } from "@/services/news-comments";
@@ -393,10 +393,6 @@ export default function StaticNewsListPage({
 
           {showStats && (
             <>
-              <div className="flex items-center gap-2">
-                <Eye size={12} />
-                <span>{item.viewsCount || 0}</span>
-              </div>
               <div className="flex items-center gap-2">
                 <Heart size={12} />
                 <span>{item.likesCount || 0}</span>
