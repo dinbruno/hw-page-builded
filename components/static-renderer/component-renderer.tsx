@@ -27,6 +27,8 @@ const StaticFooter = dynamic(() => import("./components/static-footer"));
 const StaticContentBlock = dynamic(() => import("./components/static-content-block"));
 const StaticNavigationBar = dynamic(() => import("./components/static-navigation-bar"));
 const StaticCalendar = dynamic(() => import("./components/static-calendar"));
+const StaticBirthdayCarousel = dynamic(() => import("./components/static-birthday-carousel"));
+const StaticBirthdayDisplay = dynamic(() => import("./components/static-birthday-display"));
 
 import {
   StaticTwoEqualColumns,
@@ -40,11 +42,13 @@ import {
   StaticCardGrid,
   StaticEnhancedImageGallery,
   StaticGalleryTemplate,
+  StaticIframe,
   StaticNewsListPage,
   StaticNewsWebpart,
   StaticRichText,
   StaticTabPanel,
   StaticVideo,
+  StaticNewsArticleLayout,
 } from "./components";
 
 const componentMap: Record<string, any> = {
@@ -52,6 +56,8 @@ const componentMap: Record<string, any> = {
   Paragraph: StaticParagraph,
   Calendar: StaticCalendar,
   BirthdayList: StaticBirthdayList,
+  BirthdayCarousel: StaticBirthdayCarousel,
+  BirthdayDisplay: StaticBirthdayDisplay,
   Button: StaticButton,
   CollapsibleSidebar: StaticCollapsibleSidebar,
   CollaboratorsList: StaticCollaboratorsList,
@@ -76,6 +82,7 @@ const componentMap: Record<string, any> = {
   ContentBlock: StaticContentBlock,
   NavigationBar: StaticNavigationBar,
   Video: StaticVideo,
+  Iframe: StaticIframe,
   RichText: StaticRichText,
   EnhancedImageGallery: StaticEnhancedImageGallery,
   GalleryTemplate: StaticGalleryTemplate,
@@ -84,7 +91,8 @@ const componentMap: Record<string, any> = {
   NewsWebpart: StaticNewsWebpart,
   TabPanel: StaticTabPanel,
   Breadcrumb: StaticBreadcrumb,
-  NewsListPageWithData: StaticNewsListPage,
+  NewsListPage: StaticNewsListPage,
+  NewsArticleLayout: StaticNewsArticleLayout,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
