@@ -236,7 +236,7 @@ export default function StaticNewsArticleLayout({
             excerpt: news.subtitle || news.content?.substring(0, 150) + "...",
             image: news.cover_image?.url || generateMockImage(news.title, "news"),
             category: "Notícias",
-            date: formatDate(news.published_at || news.createdAt),
+            date: news.published_at || news.createdAt,
             author: news.author?.name || "Autor",
             authorAvatar: undefined,
             likes: 0,
@@ -277,22 +277,6 @@ export default function StaticNewsArticleLayout({
       loadArticleData(slug);
     }
   }, [slug, maxRelatedNews]);
-
-  // Função para formatar data
-  const formatDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("pt-BR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch {
-      return "Data não disponível";
-    }
-  };
 
   // Função para lidar com curtidas
   const handleLike = async () => {
@@ -489,7 +473,7 @@ export default function StaticNewsArticleLayout({
                 {showArticleDate && article?.published_at && (
                   <span className="flex items-center gap-1">
                     <Calendar size={14} />
-                    {formatDate(article.published_at)}
+                    {article.published_at}
                   </span>
                 )}
 
