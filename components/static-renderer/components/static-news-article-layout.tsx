@@ -519,13 +519,11 @@ export default function StaticNewsArticleLayout({
             )}
 
             {/* Conteúdo do Artigo */}
-            <div className="prose prose-lg max-w-none mb-6">
-              {article?.content?.split("\n\n").map((paragraph, index) => (
-                <p key={index} className="mb-4 leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+            <div
+              className="prose prose-lg max-w-none mb-6"
+              style={{ color: textColor }}
+              dangerouslySetInnerHTML={{ __html: article?.content || "" }}
+            />
 
             {/* Tags do Artigo */}
             {showArticleTags && (
