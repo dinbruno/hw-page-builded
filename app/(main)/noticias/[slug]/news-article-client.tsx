@@ -282,7 +282,7 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
                     clipRule="evenodd"
                   />
                 </svg>
-                {formatDate(article.created_at)}
+                {formatDate(article.published_at || article.created_at)}
               </span>
               {article.category && <span className="px-3 py-1 bg-white bg-opacity-20 rounded-full backdrop-blur-sm">{article.category}</span>}
             </div>
@@ -489,7 +489,7 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
                           {/* Meta Info */}
                           <div className="flex items-center justify-between text-xs" style={{ color: textColor, opacity: 0.6 }}>
                             <span>{news.created_by?.name || "Autor"}</span>
-                            <span>{formatDate(news.created_at)}</span>
+                            <span>{formatDate(news.published_at || news.created_at)}</span>
                           </div>
 
                           {/* Stats - Remove views, keep only likes and comments */}

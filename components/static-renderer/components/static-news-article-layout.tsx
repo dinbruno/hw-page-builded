@@ -236,7 +236,7 @@ export default function StaticNewsArticleLayout({
             excerpt: news.subtitle || news.content?.substring(0, 150) + "...",
             image: news.cover_image?.url || generateMockImage(news.title, "news"),
             category: "Notícias",
-            date: news.published_at || news.createdAt,
+            date: formatDate(news.published_at || news.createdAt),
             author: news.author?.name || "Autor",
             authorAvatar: undefined,
             likes: 0,
@@ -278,26 +278,19 @@ export default function StaticNewsArticleLayout({
     }
   }, [slug, maxRelatedNews]);
 
-  // Função para lidar com curtidas
-  const handleLike = async () => {
-    if (!article) return;
-
+  // Função para formatar data
+  const formatDate = (dateString: string): string => {
     try {
-      if (isLiked) {
-        // Remover curtida (implementar no service)
-        setIsLiked(false);
-        setLikes((prev) => prev.filter((like) => like.collab_id !== "current-user-id"));
-      } else {
-        // Adicionar curtida
-        const newLike = await NewsLikesService.create({
-          news_id: article.id,
-          collab_id: "current-user-id", // Em produção, usar ID real do usuário
-        });
-        setIsLiked(true);
-        setLikes((prev) => [...prev, newLike]);
-      }
-    } catch (err) {
-      console.error("Erro ao processar curtida:", err);
+      const date = new Date(dateString);
+      return date.toLocaleDateString("pt-BR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "Data não disponível";
     }
   };
 
@@ -473,7 +466,7 @@ export default function StaticNewsArticleLayout({
                 {showArticleDate && article?.published_at && (
                   <span className="flex items-center gap-1">
                     <Calendar size={14} />
-                    {article.published_at}
+                    {formatDate(article.published_at || article.createdAt)}
                   </span>
                 )}
 
