@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Gift, Cake, Calendar, Sparkles, ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { CollabsService } from "@/services/collabs/collabs.service";
 import type { Collab } from "@/services/collabs/collabs.types";
-import { BirthdayCard } from "./birthday-card";
+import { Button } from "@/components/ui/button";
 
 interface BirthdayPerson {
   id: string;
@@ -51,6 +51,7 @@ interface StaticBirthdayDisplayProps {
   showPagination?: boolean;
   titleSize?: number;
   nameSize?: number;
+  roleSize?: number;
   dateSize?: number;
   departmentSize?: number;
   titleWeight?: "normal" | "medium" | "semibold" | "bold";
@@ -75,6 +76,14 @@ interface StaticBirthdayDisplayProps {
   cardBackgroundColor?: string;
   cardBorderRadius?: number;
   cardShadow?: boolean;
+
+  // Card specific properties
+  showButton?: boolean;
+  buttonText?: string;
+  buttonEmoji?: string;
+  showConfetti?: boolean;
+  confettiColors?: string[];
+  confettiDensity?: number;
 
   // Empty State Properties
   showEmptyState?: boolean;
@@ -135,6 +144,211 @@ const defaultPeople: BirthdayPerson[] = [
   },
 ];
 
+// Componente Confetti (igual ao do BirthdayCard)
+const Confetti = ({ colors = ["#ff21fb", "#ffed36", "#9ded1a", "#03a3f5", "#d345f8"], density = 50 }) => {
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  };
+
+  const confettiItems = useMemo(
+    () =>
+      Array.from({ length: density }).map((_, i) => {
+        const sizeRandom = seededRandom(i * 12.9898);
+        const colorRandom = seededRandom(i * 78.233);
+        const leftRandom = seededRandom(i * 43.758);
+        const topRandom = seededRandom(i * 93.9898);
+        const shapeRandom = seededRandom(i * 15.1234);
+        const rotateRandom = seededRandom(i * 67.5432);
+        const opacityRandom = seededRandom(i * 23.8765);
+
+        const size = sizeRandom * 5 + 2;
+        const colorIndex = Math.floor(colorRandom * colors.length);
+        const color = colors[colorIndex];
+        const left = `${leftRandom * 100}%`;
+        const top = `${topRandom * 100}%`;
+        const shape = shapeRandom > 0.5 ? "circle" : "square";
+        const rotate = rotateRandom * 360;
+        const opacity = opacityRandom * 0.5 + 0.3;
+
+        return { size, color, left, top, shape, rotate, opacity, id: i };
+      }),
+    [density, colors]
+  );
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {confettiItems.map((item) => (
+        <div
+          key={item.id}
+          className="absolute"
+          style={{
+            width: `${item.size}px`,
+            height: `${item.size}px`,
+            backgroundColor: item.color,
+            borderRadius: item.shape === "circle" ? "50%" : "2px",
+            left: item.left,
+            top: item.top,
+            transform: `rotate(${item.rotate}deg)`,
+            opacity: item.opacity,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Componente BirthdayCard interno (usando o layout fornecido)
+const BirthdayCard = ({
+  person,
+  cardWidth = 300,
+  cardHeight = 400,
+  backgroundColor = "#d345f8",
+  textColor = "#111827",
+  accentColor = "#9c27b0",
+  showButton = true,
+  buttonText = "Parabenize",
+  buttonEmoji = "😺",
+  showConfetti = true,
+  confettiColors = ["#ff21fb", "#ffed36", "#9ded1a", "#03a3f5", "#d345f8"],
+  confettiDensity = 50,
+  avatarSize = 100,
+  nameSize = 24,
+  roleSize = 16,
+  dateSize = 18,
+  cardBorderRadius = 24,
+}: {
+  person: BirthdayPerson;
+  cardWidth?: number;
+  cardHeight?: number;
+  backgroundColor?: string;
+  textColor?: string;
+  accentColor?: string;
+  showButton?: boolean;
+  buttonText?: string;
+  buttonEmoji?: string;
+  showConfetti?: boolean;
+  confettiColors?: string[];
+  confettiDensity?: number;
+  avatarSize?: number;
+  nameSize?: number;
+  roleSize?: number;
+  dateSize?: number;
+  cardBorderRadius?: number;
+}) => {
+  // Get initials from name
+  const getInitials = (name: string) => {
+    const nameParts = name.split(" ").filter((part) => part.length > 0);
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+  };
+
+  return (
+    <motion.div
+      className="relative flex flex-col items-center"
+      style={{
+        width: `${cardWidth}px`,
+        height: `${cardHeight}px`,
+        borderRadius: `${cardBorderRadius}px`,
+        overflow: "hidden",
+        backgroundColor: "white",
+      }}
+      whileHover={{ y: -5, scale: 1.02 }}
+      transition={{ duration: 0.2 }}
+    >
+      {/* Parte superior colorida com confetes */}
+      <div
+        className="relative w-full"
+        style={{
+          height: `${cardHeight * 0.35}px`,
+          backgroundColor: backgroundColor,
+          borderTopLeftRadius: `${cardBorderRadius}px`,
+          borderTopRightRadius: `${cardBorderRadius}px`,
+        }}
+      >
+        {showConfetti && <Confetti colors={confettiColors} density={confettiDensity} />}
+      </div>
+
+      {/* Avatar posicionado na transição entre as áreas colorida e branca */}
+      <div
+        className="relative rounded-full overflow-hidden border-4 border-white shadow-lg z-10"
+        style={{
+          width: `${avatarSize}px`,
+          height: `${avatarSize}px`,
+          marginTop: `-${avatarSize / 2}px`,
+        }}
+      >
+        {person.avatar ? (
+          <Image src={person.avatar || "/placeholder.svg"} alt={person.name} fill className="object-cover" />
+        ) : (
+          <div
+            className="flex items-center justify-center w-full h-full"
+            style={{
+              backgroundColor: backgroundColor,
+              color: "white",
+              fontSize: `${nameSize * 0.6}px`,
+              fontWeight: "semibold",
+            }}
+          >
+            {getInitials(person.name)}
+          </div>
+        )}
+      </div>
+
+      {/* Conteúdo em fundo branco */}
+      <div
+        className="flex-1 flex flex-col items-center justify-center w-full bg-white pt-4 px-4"
+        style={{
+          marginTop: `${avatarSize / 4}px`,
+        }}
+      >
+        <h3
+          className="text-center font-semibold mb-1"
+          style={{
+            fontSize: `${nameSize}px`,
+            color: textColor,
+          }}
+        >
+          {person.name}
+        </h3>
+
+        <p
+          className="text-center font-normal text-gray-500 mb-2"
+          style={{
+            fontSize: `${roleSize}px`,
+          }}
+        >
+          {person.role || person.department}
+        </p>
+
+        <p
+          className="text-center font-medium mb-6"
+          style={{
+            fontSize: `${dateSize}px`,
+            color: accentColor,
+          }}
+        >
+          {person.date}
+        </p>
+
+        {showButton && (
+          <Button
+            className="mt-auto mb-6"
+            style={{
+              backgroundColor: accentColor,
+              color: "white",
+            }}
+          >
+            {buttonText} {buttonEmoji}
+          </Button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
 export default function StaticBirthdayDisplay({
   // Data Source
   dataSource = "today",
@@ -157,11 +371,11 @@ export default function StaticBirthdayDisplay({
   // List Specific Properties
   showDate = true,
   showDepartment = false,
-  maxHeight = 300,
-  avatarSize = 40,
+  maxHeight = 400,
+  avatarSize = 60,
   initialsBackgroundColor = "#f23030",
   initialsTextColor = "#ffffff",
-  itemSpacing = 12,
+  itemSpacing = 16,
   itemHoverEffect = true,
   displayMode = "list",
   gridColumns = 2,
@@ -169,6 +383,7 @@ export default function StaticBirthdayDisplay({
   showPagination = false,
   titleSize = 18,
   nameSize = 16,
+  roleSize = 16,
   dateSize = 14,
   departmentSize = 14,
   titleWeight = "medium",
@@ -180,7 +395,7 @@ export default function StaticBirthdayDisplay({
   itemBorderRadius = 8,
   itemBorderWidth = 0,
   itemBorderColor = "#e5e7eb",
-  itemPadding = 8,
+  itemPadding = 16,
 
   // Carousel Specific Properties
   autoplay = true,
@@ -190,9 +405,17 @@ export default function StaticBirthdayDisplay({
   cardWidth = 300,
   cardHeight = 400,
   cardSpacing = 20,
-  cardBackgroundColor = "#9c27b0",
-  cardBorderRadius = 12,
+  cardBackgroundColor = "#d345f8",
+  cardBorderRadius = 24,
   cardShadow = true,
+
+  // Card specific properties
+  showButton = true,
+  buttonText = "Parabenize",
+  buttonEmoji = "😺",
+  showConfetti = true,
+  confettiColors = ["#ff21fb", "#ffed36", "#9ded1a", "#03a3f5", "#d345f8"],
+  confettiDensity = 50,
 
   // Empty State Properties
   showEmptyState = true,
@@ -284,6 +507,15 @@ export default function StaticBirthdayDisplay({
   // Use real data or mock data based on settings
   const currentPeople = useMockData ? defaultPeople : realPeople;
 
+  // Get initials from name
+  const getInitials = (name: string) => {
+    const nameParts = name.split(" ").filter((part) => part.length > 0);
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase();
+    }
+    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
+  };
+
   // Responsividade
   useEffect(() => {
     const handleResize = () => {
@@ -350,15 +582,6 @@ export default function StaticBirthdayDisplay({
     }
   };
 
-  // Get initials from name
-  const getInitials = (name: string) => {
-    const nameParts = name.split(" ").filter((part) => part.length > 0);
-    if (nameParts.length === 1) {
-      return nameParts[0].charAt(0).toUpperCase();
-    }
-    return `${nameParts[0].charAt(0)}${nameParts[nameParts.length - 1].charAt(0)}`.toUpperCase();
-  };
-
   const textAlignmentClass = {
     left: "text-left",
     center: "text-center",
@@ -420,7 +643,7 @@ export default function StaticBirthdayDisplay({
         <div className="h-full w-full" style={{ padding: "24px" }}>
           {/* Title */}
           <div className="mb-6">
-            <div className="flex items-center gap-3 mb-2 group">
+            <div className="flex items-center gap-3 mb-2">
               {showIcon && (
                 <div
                   className="flex items-center justify-center p-2 rounded-lg shadow-sm"
@@ -486,87 +709,100 @@ export default function StaticBirthdayDisplay({
     return gridColumns;
   };
 
-  // Renderizar item individual da lista
-  const renderPersonItem = (person: BirthdayPerson) => (
+  // Renderizar item individual da lista (com layout similar ao card)
+  const renderListItem = (person: BirthdayPerson) => (
     <motion.div
       key={person.id}
-      className="group relative overflow-hidden"
-      whileHover={itemHoverEffect ? { y: -3, scale: 1.01 } : {}}
+      className="group relative overflow-hidden bg-white shadow-md"
+      whileHover={itemHoverEffect ? { y: -3, scale: 1.02 } : {}}
       transition={{ duration: 0.2 }}
       style={{
         marginBottom: `${itemSpacing}px`,
-        backgroundColor: itemBackgroundColor,
         borderRadius: `${itemBorderRadius}px`,
         borderWidth: `${itemBorderWidth}px`,
         borderColor: itemBorderColor,
         borderStyle: "solid",
-        padding: `${itemPadding}px`,
+        minHeight: "140px",
       }}
     >
-      <div className="relative flex items-center gap-3">
-        {/* Avatar with enhanced styling */}
-        <div className="relative flex-shrink-0">
-          <div
-            className="relative overflow-hidden flex items-center justify-center"
-            style={{
-              width: `${avatarSize}px`,
-              height: `${avatarSize}px`,
-              ...getAvatarShapeStyle(),
-            }}
-          >
-            {person.avatar ? (
-              <Image src={person.avatar || "/placeholder.svg"} alt={person.name} fill className="object-cover" />
-            ) : (
-              <div
-                className="flex items-center justify-center w-full h-full"
-                style={{
-                  backgroundColor: initialsBackgroundColor,
-                  color: initialsTextColor,
-                  fontSize: `${nameSize * 0.6}px`,
-                  fontWeight: nameWeight,
-                }}
-              >
-                {getInitials(person.name)}
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Parte superior colorida (menor para lista) */}
+      <div
+        className="relative w-full"
+        style={{
+          height: "50px",
+          backgroundColor: cardBackgroundColor,
+          borderTopLeftRadius: `${itemBorderRadius}px`,
+          borderTopRightRadius: `${itemBorderRadius}px`,
+        }}
+      >
+        {showConfetti && <Confetti colors={confettiColors} density={confettiDensity / 2} />}
+      </div>
 
-        {/* Content */}
-        <div className="flex-grow min-w-0">
-          <p
-            className="truncate"
+      {/* Avatar na transição */}
+      <div
+        className="relative rounded-full overflow-hidden border-3 border-white shadow-lg z-10 mx-auto"
+        style={{
+          width: `${avatarSize}px`,
+          height: `${avatarSize}px`,
+          marginTop: `-${avatarSize / 2}px`,
+          ...getAvatarShapeStyle(),
+        }}
+      >
+        {person.avatar ? (
+          <Image src={person.avatar || "/placeholder.svg"} alt={person.name} fill className="object-cover" />
+        ) : (
+          <div
+            className="flex items-center justify-center w-full h-full"
             style={{
-              color: textColor,
-              fontSize: `${nameSize}px`,
+              backgroundColor: initialsBackgroundColor,
+              color: initialsTextColor,
+              fontSize: `${nameSize * 0.6}px`,
               fontWeight: nameWeight,
             }}
           >
-            {person.name}
+            {getInitials(person.name)}
+          </div>
+        )}
+      </div>
+
+      {/* Conteúdo em fundo branco */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full bg-white pt-2 pb-4 px-4">
+        <p
+          className="text-center truncate"
+          style={{
+            color: textColor,
+            fontSize: `${nameSize}px`,
+            fontWeight: nameWeight,
+            marginBottom: "4px",
+          }}
+        >
+          {person.name}
+        </p>
+
+        {showDepartment && person.department && (
+          <p
+            className="text-center opacity-70 truncate text-xs"
+            style={{
+              fontSize: `${departmentSize}px`,
+              marginBottom: "4px",
+            }}
+          >
+            {person.department}
           </p>
-          {showDate && (
-            <p
-              className="truncate"
-              style={{
-                color: accentColor,
-                fontSize: `${dateSize}px`,
-                fontWeight: dateWeight,
-              }}
-            >
-              {person.date}
-            </p>
-          )}
-          {showDepartment && person.department && (
-            <p
-              className="opacity-70 truncate"
-              style={{
-                fontSize: `${departmentSize}px`,
-              }}
-            >
-              {person.department}
-            </p>
-          )}
-        </div>
+        )}
+
+        {showDate && (
+          <p
+            className="text-center truncate"
+            style={{
+              color: accentColor,
+              fontSize: `${dateSize}px`,
+              fontWeight: dateWeight,
+            }}
+          >
+            {person.date}
+          </p>
+        )}
       </div>
     </motion.div>
   );
@@ -589,7 +825,7 @@ export default function StaticBirthdayDisplay({
                 overflowY: "auto",
               }}
             >
-              {(showPagination ? paginatedPeople : currentPeople).map(renderPersonItem)}
+              {(showPagination ? paginatedPeople : currentPeople).map(renderListItem)}
             </div>
           );
         case "list":
@@ -599,10 +835,9 @@ export default function StaticBirthdayDisplay({
               className="space-y-3 overflow-y-auto"
               style={{
                 maxHeight: `${maxHeight}px`,
-                gap: `${itemSpacing}px`,
               }}
             >
-              {(showPagination ? paginatedPeople : currentPeople).map(renderPersonItem)}
+              {(showPagination ? paginatedPeople : currentPeople).map(renderListItem)}
             </div>
           );
       }
@@ -639,11 +874,8 @@ export default function StaticBirthdayDisplay({
     );
   };
 
-  // Renderizar conteúdo do carrossel
+  // Renderizar conteúdo do carrossel (usando BirthdayCard completo)
   const renderCarouselContent = () => {
-    const totalContentWidth = currentPeople.length * (cardWidth + cardSpacing) - cardSpacing;
-    const shouldScroll = totalContentWidth > windowWidth;
-
     const handlePrev = () => {
       setActiveCarouselIndex((prev) => (prev - 1 + currentPeople.length) % currentPeople.length);
     };
@@ -655,6 +887,10 @@ export default function StaticBirthdayDisplay({
     const handleDotClick = (index: number) => {
       setActiveCarouselIndex(index);
     };
+
+    // Calculate how many cards can fit in the viewport
+    const cardsPerView = Math.floor((windowWidth - 100) / (cardWidth + cardSpacing));
+    const shouldScroll = currentPeople.length > cardsPerView;
 
     return (
       <div className="relative overflow-hidden">
@@ -670,20 +906,30 @@ export default function StaticBirthdayDisplay({
           {currentPeople.map((person) => (
             <div key={person.id} className="flex-shrink-0" style={{ width: `${cardWidth}px` }}>
               <div
-                className={`w-full h-full rounded-lg transition-shadow duration-300 ${cardShadow ? "shadow-xl hover:shadow-2xl" : ""}`}
+                className={`w-full h-full transition-shadow duration-300 ${cardShadow ? "shadow-xl hover:shadow-2xl" : ""}`}
                 style={{
                   borderRadius: `${cardBorderRadius}px`,
                   boxShadow: cardShadow ? "0 25px 50px -12px rgba(0, 0, 0, 0.25)" : "none",
                 }}
               >
                 <BirthdayCard
-                  name={person.name}
-                  role={person.role || person.department || ""}
-                  date={person.date}
-                  avatar={person.avatar || ""}
-                  backgroundColor={cardBackgroundColor}
+                  person={person}
                   cardWidth={cardWidth}
                   cardHeight={cardHeight}
+                  backgroundColor={cardBackgroundColor}
+                  textColor={textColor}
+                  accentColor={accentColor}
+                  showButton={showButton}
+                  buttonText={buttonText}
+                  buttonEmoji={buttonEmoji}
+                  showConfetti={showConfetti}
+                  confettiColors={confettiColors}
+                  confettiDensity={confettiDensity}
+                  avatarSize={avatarSize + 40} // Maior para carousel
+                  nameSize={nameSize + 8}
+                  roleSize={roleSize}
+                  dateSize={dateSize + 4}
+                  cardBorderRadius={cardBorderRadius}
                 />
               </div>
             </div>
@@ -739,7 +985,7 @@ export default function StaticBirthdayDisplay({
       <div className="h-full w-full" style={{ padding: "24px" }}>
         {/* Title */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2 group">
+          <div className="flex items-center gap-3 mb-2">
             {showIcon && (
               <div
                 className="flex items-center justify-center p-2 rounded-lg shadow-sm transition-shadow duration-200"
