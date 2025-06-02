@@ -160,6 +160,71 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
     loadArticle();
   }, [slug]);
 
+  // Update metadata client-side when article loads
+  useEffect(() => {
+    if (article) {
+      // Update document title
+      document.title = `${article.title} - Portal de Notícias`;
+
+      // Update meta description
+      const metaDescription = document.querySelector('meta[name="description"]');
+      if (metaDescription) {
+        metaDescription.setAttribute("content", article.subtitle || `Leia o artigo completo: ${article.title}`);
+      } else {
+        const newMetaDescription = document.createElement("meta");
+        newMetaDescription.name = "description";
+        newMetaDescription.content = article.subtitle || `Leia o artigo completo: ${article.title}`;
+        document.head.appendChild(newMetaDescription);
+      }
+
+      // Update Open Graph meta tags
+      const updateOrCreateMeta = (property: string, content: string) => {
+        const existingMeta = document.querySelector(`meta[property="${property}"]`);
+        if (existingMeta) {
+          existingMeta.setAttribute("content", content);
+        } else {
+          const newMeta = document.createElement("meta");
+          newMeta.setAttribute("property", property);
+          newMeta.setAttribute("content", content);
+          document.head.appendChild(newMeta);
+        }
+      };
+
+      // Open Graph tags
+      updateOrCreateMeta("og:title", article.title);
+      updateOrCreateMeta("og:description", article.subtitle || `Leia o artigo completo: ${article.title}`);
+      updateOrCreateMeta("og:type", "article");
+      if (article.cover_image?.url) {
+        updateOrCreateMeta("og:image", article.cover_image.url);
+      }
+
+      // Twitter Card tags
+      const updateOrCreateTwitterMeta = (name: string, content: string) => {
+        const existingMeta = document.querySelector(`meta[name="${name}"]`);
+        if (existingMeta) {
+          existingMeta.setAttribute("content", content);
+        } else {
+          const newMeta = document.createElement("meta");
+          newMeta.setAttribute("name", name);
+          newMeta.setAttribute("content", content);
+          document.head.appendChild(newMeta);
+        }
+      };
+
+      updateOrCreateTwitterMeta("twitter:card", "summary_large_image");
+      updateOrCreateTwitterMeta("twitter:title", article.title);
+      updateOrCreateTwitterMeta("twitter:description", article.subtitle || `Leia o artigo completo: ${article.title}`);
+      if (article.cover_image?.url) {
+        updateOrCreateTwitterMeta("twitter:image", article.cover_image.url);
+      }
+
+      // Cleanup function to reset title when component unmounts
+      return () => {
+        document.title = "Portal de Notícias";
+      };
+    }
+  }, [article]);
+
   // Custom dropdown items with logout functionality
   const customUserDropdownItems = [
     {
