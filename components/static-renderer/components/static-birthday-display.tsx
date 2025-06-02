@@ -473,14 +473,16 @@ export default function StaticBirthdayDisplay({
       }
 
       // Transform Collab data to BirthdayPerson format
-      const birthdayPeople: BirthdayPerson[] = collaborators.map((collaborator) => ({
-        id: collaborator.id,
-        name: collaborator.name,
-        avatar: collaborator.thumbnail?.url || collaborator.thumb,
-        date: collaborator.birthday ? formatBirthdayDate(collaborator.birthday) : "Data não informada",
-        department: collaborator.position || collaborator.access_level?.name,
-        role: collaborator.position || collaborator.access_level?.name,
-      }));
+      const birthdayPeople: BirthdayPerson[] = collaborators.map((collaborator) => {
+        return {
+          id: collaborator.id,
+          name: collaborator.name,
+          avatar: collaborator.thumbnail?.url || collaborator.thumb,
+          date: collaborator.birthday ? formatBirthdayDate(collaborator.birthday) : "Data não informada",
+          department: collaborator.position || collaborator.access_level?.name,
+          role: collaborator.position || collaborator.access_level?.name,
+        };
+      });
 
       setRealPeople(birthdayPeople);
     } catch (err) {

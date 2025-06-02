@@ -1,7 +1,7 @@
 import { Collab, CreateCollabData, UpdateCollabData, AuthCollab, CollabProfile } from "./collabs.types";
 import { getHeaders } from "@/utils/getHeaders";
 
-const API_URL = process.env.NEXT_PUBLIC_API_CORE_URL_PROD || "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_CORE_URL_PROD;
 
 export class CollabsService {
   private static async handleResponse<T>(response: Response): Promise<T> {
@@ -96,39 +96,25 @@ export class CollabsService {
    */
   static async getTodayBirthdays(): Promise<Collab[]> {
     if (!API_URL) {
-      console.error("❌ CollabsService: API_URL is not defined");
       throw new Error("API_URL is not defined");
     }
 
     try {
-      const headers = await getHeaders();
-
       const res = await fetch(`${API_URL}/collabs/birthdays/today`, {
         method: "GET",
-        headers,
+        headers: await getHeaders(),
         cache: "no-store",
       });
 
-      console.log("📡 CollabsService: Response status:", res.status, res.statusText);
-
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error("❌ CollabsService: API Error:", res.status, res.statusText, errorText);
-        throw new Error(`Failed to get today's birthdays: ${res.status} ${res.statusText}`);
+        throw new Error(`API Error: ${res.status} - ${res.statusText}`);
       }
 
-      const data = await this.handleResponse<Collab[]>(res);
-      console.log("✅ CollabsService: Successfully fetched birthdays:", Array.isArray(data) ? data.length : "invalid data", "items");
-
-      if (!Array.isArray(data)) {
-        console.error("❌ CollabsService: Invalid data format received:", typeof data);
-        throw new Error("Invalid format in getTodayBirthdays - expected array");
-      }
-
-      return data;
+      const result = await this.handleResponse<Collab[]>(res);
+      return result || [];
     } catch (error) {
       console.error("❌ CollabsService: Error in getTodayBirthdays:", error);
-      throw error;
+      return [];
     }
   }
 

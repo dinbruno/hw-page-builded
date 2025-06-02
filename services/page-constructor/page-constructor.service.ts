@@ -21,11 +21,8 @@ export class PageService {
     }
 
     try {
-      console.log("PageService: Buscando página por ID", { pageId, workspaceId });
-
       // Use server-side headers if provided, otherwise client-side
       const headers = getHeaders(serverToken, serverTenantId);
-      console.log("PageService: Headers para a requisição", headers);
 
       const apiUrl = `${this.API_URL}/pages/${pageId}`;
       const response = await fetch(apiUrl, {
@@ -67,11 +64,8 @@ export class PageService {
     }
 
     try {
-      console.log("PageService: Buscando página por slug", { slug, workspaceId });
-
       // Use server-side headers if provided, otherwise client-side
       const headers = getHeaders(serverToken, serverTenantId);
-      console.log("PageService: Headers para a requisição", headers);
 
       const url = new URL(`${this.API_URL}/pages/by-slug/${slug}`);
       if (workspaceId) {
@@ -117,11 +111,8 @@ export class PageService {
     }
 
     try {
-      console.log("PageService: Buscando todas as páginas", { workspaceId });
-
       // Use server-side headers if provided, otherwise client-side
       const headers = getHeaders(serverToken, serverTenantId);
-      console.log("PageService: Headers para a requisição", headers);
 
       const url = new URL(`${this.API_URL}/pages`);
       if (workspaceId) {
