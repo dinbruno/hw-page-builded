@@ -5,19 +5,9 @@ import { NewsService } from "@/services/news/news.service";
 import { CustomNavigationBar } from "@/components/ui/custom-navigation-bar";
 import StaticBreadcrumb from "@/components/static-renderer/components/static-breadcrumb";
 import StaticContainer from "@/components/static-renderer/components/static-container";
-import dynamic from "next/dynamic";
+import StaticNewsArticleLayout from "@/components/static-renderer/components/static-news-article-layout";
+import StaticCommentsSection from "@/components/static-renderer/components/static-comments-section";
 import { useCurrentUser, useAuth } from "@/contexts/auth-context";
-
-// Importações dinâmicas para evitar SSR
-const StaticNewsArticleLayout = dynamic(() => import("@/components/static-renderer/components/static-news-article-layout"), {
-  ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-200 h-96 rounded"></div>,
-});
-
-const StaticCommentsSection = dynamic(() => import("@/components/static-renderer/components/static-comments-section"), {
-  ssr: false,
-  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded"></div>,
-});
 
 // Mock image generator function
 const generateMockImage = (seed: string, category = "news") => {
@@ -62,16 +52,10 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isTogglingLike, setIsTogglingLike] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   // Get current user for authentication
   const { user, isLoading: userLoading, isAuthenticated, collabId, profile } = useCurrentUser();
   const { logout } = useAuth();
-
-  // Verificar se está montado no cliente para evitar DYNAMIC_SERVER_USAGE
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Get user display data
   const userName = user?.name || profile?.name || "Usuário";
@@ -152,8 +136,6 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
 
   // Carregar dados da notícia
   useEffect(() => {
-    if (!mounted) return; // Só carrega após montar no cliente
-
     const loadArticle = async () => {
       setLoading(true);
       setError(null);
@@ -176,7 +158,7 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
     };
 
     loadArticle();
-  }, [slug, mounted]);
+  }, [slug]);
 
   // Custom dropdown items with logout functionality
   const customUserDropdownItems = [
@@ -209,18 +191,6 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
       await logout();
     }
   };
-
-  // Show loading while not mounted to avoid hydration issues
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mb-4 mx-auto" style={{ borderColor: accentColor }}></div>
-          <p style={{ color: textColor }}>Carregando...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Show loading while user data is loading
   if (userLoading || loading) {
