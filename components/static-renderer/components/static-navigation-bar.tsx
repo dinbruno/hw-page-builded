@@ -59,6 +59,7 @@ interface NavigationBarProps {
   messageCount?: number;
   userDropdownItems?: UserDropdownItem[];
   showUserDropdown?: boolean;
+  onDropdownItemClick?: (itemId: string) => void;
   id?: string;
   style?: React.CSSProperties;
 }
@@ -127,6 +128,7 @@ export default function StaticNavigationBar({
   messageCount = 0,
   userDropdownItems = defaultUserDropdownItems,
   showUserDropdown = true,
+  onDropdownItemClick,
   id,
   style,
 }: NavigationBarProps) {
@@ -249,7 +251,6 @@ export default function StaticNavigationBar({
             {showUserOptions && (
               <div className="relative">
                 <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}>
-                  <span className="hidden sm:inline">{userName}</span>
                   <div className="relative">
                     <img
                       src={userAvatar || "/placeholder.svg"}
@@ -271,7 +272,15 @@ export default function StaticNavigationBar({
                           key={item.id}
                           href={item.url}
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                          onClick={() => setIsUserDropdownOpen(false)}
+                          onClick={(e) => {
+                            if (item.url === "#" || item.id === "logout") {
+                              e.preventDefault();
+                            }
+                            setIsUserDropdownOpen(false);
+                            if (onDropdownItemClick) {
+                              onDropdownItemClick(item.id);
+                            }
+                          }}
                         >
                           {item.icon && <IconComponent iconName={item.icon} />}
                           <span className={item.icon ? "ml-2" : ""}>{item.label}</span>
@@ -347,7 +356,15 @@ export default function StaticNavigationBar({
                         href={item.url}
                         className="flex items-center py-2 px-4 text-sm hover:bg-gray-50 transition-colors"
                         style={{ color: textColor }}
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={(e) => {
+                          if (item.url === "#" || item.id === "logout") {
+                            e.preventDefault();
+                          }
+                          setMobileMenuOpen(false);
+                          if (onDropdownItemClick) {
+                            onDropdownItemClick(item.id);
+                          }
+                        }}
                       >
                         {item.icon && <IconComponent iconName={item.icon} />}
                         <span className={item.icon ? "ml-2" : ""}>{item.label}</span>

@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React from "react";
 import StaticNavigationBar from "@/components/static-renderer/components/static-navigation-bar";
-import { UserAvatar } from "./user-avatar";
 
 interface CustomNavigationBarProps {
   logo?: string;
@@ -66,30 +65,13 @@ export const CustomNavigationBar: React.FC<CustomNavigationBarProps> = ({
     `)}`;
   };
 
-  // Handle dropdown clicks by intercepting document clicks
-  useEffect(() => {
-    const handleDocumentClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-
-      // Check if clicked element is a dropdown item
-      if (target.closest("a[href]")) {
-        const link = target.closest("a[href]") as HTMLAnchorElement;
-        const href = link.getAttribute("href");
-
-        // Find the dropdown item by href
-        const clickedItem = userDropdownItems.find((item) => item.url === href);
-        if (clickedItem && onDropdownItemClick) {
-          if (href === "#" || clickedItem.id === "logout") {
-            event.preventDefault();
-            onDropdownItemClick(clickedItem.id);
-          }
-        }
-      }
-    };
-
-    document.addEventListener("click", handleDocumentClick);
-    return () => document.removeEventListener("click", handleDocumentClick);
-  }, [userDropdownItems, onDropdownItemClick]);
-
-  return <StaticNavigationBar {...props} userName={userName} userAvatar={getUserAvatarSrc()} userDropdownItems={userDropdownItems} />;
+  return (
+    <StaticNavigationBar
+      {...props}
+      userName={userName}
+      userAvatar={getUserAvatarSrc()}
+      userDropdownItems={userDropdownItems}
+      onDropdownItemClick={onDropdownItemClick}
+    />
+  );
 };
