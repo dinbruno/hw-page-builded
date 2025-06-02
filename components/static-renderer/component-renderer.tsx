@@ -93,6 +93,7 @@ const componentMap: Record<string, any> = {
   Breadcrumb: StaticBreadcrumb,
   NewsListPage: StaticNewsListPage,
   NewsArticleLayout: StaticNewsArticleLayout,
+  NewsListPageWithData: StaticNewsListPage,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
