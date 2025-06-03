@@ -50,6 +50,7 @@ import {
   StaticVideo,
   StaticNewsArticleLayout,
 } from "./components";
+import StaticCollaboratorsPage from "./components/static-collaborators-page";
 
 const componentMap: Record<string, any> = {
   Banner: StaticBanner,
@@ -94,6 +95,7 @@ const componentMap: Record<string, any> = {
   NewsListPage: StaticNewsListPage,
   NewsArticleLayout: StaticNewsArticleLayout,
   NewsListPageWithData: StaticNewsListPage,
+  CollaboratorsPage: StaticCollaboratorsPage,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
