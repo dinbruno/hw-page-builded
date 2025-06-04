@@ -188,7 +188,7 @@ export default function StaticNewsWebpart({
           likesCount: likes.length,
           viewsCount: 0, // Campo não existe na interface, usar 0
           formattedDate: formatDate(newsItem.published_at || newsItem.createdAt),
-          imageUrl: newsItem.cover_image_id ? `/api/files/${newsItem.cover_image_id}` : undefined,
+          imageUrl: newsItem.cover_image?.url, // Usar a URL direta do campo aninhado
           categoryName: "Notícias", // Campo category não existe, usar valor padrão
         };
 
@@ -202,7 +202,7 @@ export default function StaticNewsWebpart({
           likesCount: 0,
           viewsCount: 0,
           formattedDate: formatDate(newsItem.published_at || newsItem.createdAt),
-          imageUrl: newsItem.cover_image_id ? `/api/files/${newsItem.cover_image_id}` : undefined,
+          imageUrl: newsItem.cover_image?.url, // Usar a URL direta do campo aninhado
           categoryName: "Notícias",
         });
       }
