@@ -313,9 +313,17 @@ export default function StaticBanner({
         background: background.color,
       };
     } else if (background?.type === "image") {
-      const imageUrl =
-        background.image.url ||
-        "https://images.unsplash.com/photo-1506765515384-028b60a970df?q=80&w=1738&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      const imageUrl = background.image.url;
+
+      // Se não há URL de imagem, usar a cor de fundo padrão
+      if (!imageUrl) {
+        return {
+          backgroundColor: background.color || backgroundColor || "#014973",
+          backgroundImage: "none",
+          background: background.color || backgroundColor || "#014973",
+        };
+      }
+
       const overlayStyle = background.overlay.enabled
         ? `linear-gradient(rgba(${hexToRgb(background.overlay.color)}, ${background.overlay.opacity}), rgba(${hexToRgb(background.overlay.color)}, ${
             background.overlay.opacity
@@ -636,26 +644,26 @@ export default function StaticBanner({
             <div
               className="w-full h-full"
               style={{
-                ...getSlideBackgroundStyle(slides[0]),
+                ...getBackgroundStyle(),
                 ...kenBurnsStyle,
               }}
             >
               <div
-                className={`w-full h-full flex flex-col ${getSlideVerticalAlignment(slides[0])} ${getSlideTextAlignment(slides[0])}`}
+                className={`w-full h-full flex flex-col ${verticalAlignmentClass} ${textAlignmentClass}`}
                 style={{
                   ...paddingStyle,
                   ...parallaxStyle,
                 }}
               >
-                <motion.h1 className="text-4xl font-bold mb-4" style={{ color: slides[0].textColor || textColor || "#ffffff" }}>
+                <motion.h1 className="text-4xl font-bold mb-4" style={{ color: textColor || "#ffffff" }}>
                   {title}
                 </motion.h1>
 
-                <motion.p className="text-lg mb-6" style={{ color: slides[0].textColor || textColor || "#ffffff" }}>
+                <motion.p className="text-lg mb-6" style={{ color: textColor || "#ffffff" }}>
                   {subtitle}
                 </motion.p>
 
-                {(slides[0].showButton ?? showButton) && (
+                {showButton && (
                   <div className="w-full">
                     <button
                       onClick={() => handleButtonClick(buttonUrl)}
