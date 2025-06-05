@@ -53,13 +53,27 @@ const SafeLogo = ({
     if (nextIndex < fallbackSources.length) {
       setCurrentSrc(fallbackSources[nextIndex]);
     } else {
-      // All image sources failed, return null
+      // All image sources failed, show SVG fallback
       setHasError(true);
     }
   };
 
+  // SVG Logo fallback
+  const SVGLogo = () => (
+    <div
+      className={`flex items-center justify-center bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg ${className}`}
+      style={{ width: width, height: height }}
+    >
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-white">
+        <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M12 12V22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M22 7L12 12L2 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+
   if (hasError || !currentSrc) {
-    return null;
+    return <SVGLogo />;
   }
 
   return (

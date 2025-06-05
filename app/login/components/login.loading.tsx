@@ -30,11 +30,24 @@ export default function LoginLoadingElegant({ workspaceInfo }: LoadingProps) {
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }} className="mb-16 relative">
           {logoUrl ? (
             <motion.div animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}>
-              <Image src={logoUrl || "/placeholder.svg"} alt="Logo" width={90} height={90} className="w-[90px] h-auto" />
+              <Image src={logoUrl} alt="Logo" width={90} height={90} className="w-[90px] h-auto" />
             </motion.div>
           ) : (
             <motion.div animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY }}>
-              <Image src="/Logo.png" alt="Logo" width={90} height={90} className="w-[90px] h-auto" />
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="90" 
+                height="90" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke={primaryColor} 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="w-[90px] h-auto"
+              >
+                <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" />
+              </svg>
             </motion.div>
           )}
         </motion.div>
