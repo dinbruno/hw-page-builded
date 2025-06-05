@@ -160,11 +160,11 @@ export class NewsService {
     return foundNews;
   }
 
-  static async getRelatedNews(newsId: string, limit: number = 5): Promise<News[]> {
+  static async getRelatedNews(newsId: string, workspaceId: string, limit: number = 5): Promise<News[]> {
     try {
       // Fallback: if API fails, try external API
       if (API_URL) {
-        const externalResponse = await fetch(`${API_URL}/news/${newsId}/related?top=${limit}`, {
+        const externalResponse = await fetch(`${API_URL}/news/related?top=${limit}&exclude_id=${newsId}&workspace_id=${workspaceId}`, {
           cache: "no-store",
           headers: await getHeaders(),
         });

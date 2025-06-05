@@ -81,11 +81,39 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
     return fallbackImages[category as keyof typeof fallbackImages] || fallbackImages.default;
   };
 
+  // Carregar dados da notícia
+  useEffect(() => {
+    const loadArticle = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const foundArticle = await NewsService.getBySlug(slug, workspaceId);
+        setArticle(foundArticle);
+
+        // Carregar notícias relacionadas usando o ID da notícia
+        if (foundArticle.id) {
+          await loadRelatedNews(foundArticle.id);
+          await loadLikesData(foundArticle.id);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar notícia:", err);
+        setError("Erro ao carregar a notícia");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadArticle();
+  }, [slug, workspaceId]);
+
   // Carregar notícias relacionadas
   const loadRelatedNews = async (newsId: string) => {
+    if (!workspaceId) return;
+    
     setRelatedNewsLoading(true);
     try {
-      const related = await NewsService.getRelatedNews(newsId, 5);
+      const related = await NewsService.getRelatedNews(newsId, workspaceId, 5);
       setRelatedNews(related);
     } catch (error) {
       console.error("Erro ao carregar notícias relacionadas:", error);
@@ -133,32 +161,6 @@ export const NewsArticlePageClient = ({ slug, workspaceId }: NewsArticlePageClie
       setIsTogglingLike(false);
     }
   };
-
-  // Carregar dados da notícia
-  useEffect(() => {
-    const loadArticle = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const foundArticle = await NewsService.getBySlug(slug);
-        setArticle(foundArticle);
-
-        // Carregar notícias relacionadas usando o ID da notícia
-        if (foundArticle.id) {
-          await loadRelatedNews(foundArticle.id);
-          await loadLikesData(foundArticle.id);
-        }
-      } catch (err) {
-        console.error("Erro ao carregar notícia:", err);
-        setError("Erro ao carregar a notícia");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadArticle();
-  }, [slug]);
 
   // Update metadata client-side when article loads
   useEffect(() => {
