@@ -21,13 +21,12 @@ export class PageService {
     }
 
     try {
-      // Use server-side headers if provided, otherwise client-side
       const headers = getHeaders(serverToken, serverTenantId);
 
       const apiUrl = `${this.API_URL}/pages/${pageId}`;
       const response = await fetch(apiUrl, {
         headers,
-        next: { revalidate: 60 }, // Revalidate cache every 60 seconds
+        next: { revalidate: 60 },
       });
 
       console.log("PageService: Resposta da API", {

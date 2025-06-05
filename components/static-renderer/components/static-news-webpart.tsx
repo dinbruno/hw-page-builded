@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { ArrowRight, Clock, Eye, Heart } from "lucide-react";
+import { ArrowRight, Clock, Eye, Heart, Newspaper } from "lucide-react";
 import { NewsService, type News } from "@/services/news";
 import { NewsCommentsService } from "@/services/news-comments";
 import { NewsLikesService } from "@/services/news-likes";
@@ -620,9 +620,34 @@ export default function StaticNewsWebpart({
         }}
         id={id}
       >
-        <div className="text-center">
-          <p style={{ color: textColor, fontSize: "14px" }}>{emptyText}</p>
-        </div>
+        <motion.div
+          className="text-center py-8"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div
+            className="mx-auto mb-4 p-4 rounded-full"
+            style={{
+              backgroundColor: `${accentColor}15`,
+              width: "80px",
+              height: "80px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Newspaper size={32} style={{ color: accentColor, opacity: 0.7 }} />
+          </div>
+
+          <h4 className="text-lg font-semibold mb-2" style={{ color: titleColor }}>
+            Nenhuma notícia encontrada
+          </h4>
+
+          <p className="text-sm" style={{ color: textColor, opacity: 0.7 }}>
+            {emptyText}
+          </p>
+        </motion.div>
       </motion.div>
     );
   }
