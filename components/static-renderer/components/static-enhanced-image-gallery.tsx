@@ -1199,7 +1199,7 @@ export default function StaticEnhancedImageGallery({
                       alt={image.name}
                       width={image.width}
                       height={image.height}
-                      className="w-full h-auto object-fill"
+                      className="w-full h-auto object-cover"
                       style={{
                         borderRadius: `${imageBorder.radius}px`,
                       }}
@@ -1279,7 +1279,7 @@ export default function StaticEnhancedImageGallery({
                       alt={image.name}
                       width={image.width}
                       height={image.height}
-                      className="w-full h-auto object-fill"
+                      className="w-full h-auto object-cover"
                       style={{
                         borderRadius: `${imageBorder.radius}px`,
                       }}
@@ -1326,7 +1326,7 @@ export default function StaticEnhancedImageGallery({
                 alt={currentImage.name}
                 width={1200}
                 height={800}
-                className="max-w-full max-h-[80vh] object-fill"
+                className="max-w-full max-h-[80vh] object-cover"
               />
             </div>
           </div>
