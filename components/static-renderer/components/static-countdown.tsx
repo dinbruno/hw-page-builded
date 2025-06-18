@@ -464,7 +464,7 @@ export default function StaticCountdown({
   };
 
   const getVisibleUnits = () => {
-    const units = [];
+    const units: { value: number; label: string; key: string }[] = [];
     if (showDays) units.push({ value: timeLeft.days, label: "Dias", key: "days" });
     if (showHours) units.push({ value: timeLeft.hours, label: "Horas", key: "hours" });
     if (showMinutes) units.push({ value: timeLeft.minutes, label: "Minutos", key: "minutes" });
