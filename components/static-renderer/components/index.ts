@@ -43,3 +43,6 @@ export { default as StaticBirthdayCarousel } from "./static-birthday-carousel";
 export { default as StaticTabPanel } from "./static-tab-panel";
 export { default as StaticCalendar } from "./static-calendar";
 export { default as StaticBirthdayDisplay } from "./static-birthday-display";
+export { default as StaticCountdown } from "./static-countdown";
+export { default as StaticDivider } from "./static-divider";
+export { default as StaticAccordion } from "./static-accordion";

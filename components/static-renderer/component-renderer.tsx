@@ -29,6 +29,9 @@ const StaticNavigationBar = dynamic(() => import("./components/static-navigation
 const StaticCalendar = dynamic(() => import("./components/static-calendar"));
 const StaticBirthdayCarousel = dynamic(() => import("./components/static-birthday-carousel"));
 const StaticBirthdayDisplay = dynamic(() => import("./components/static-birthday-display"));
+const StaticCountdown = dynamic(() => import("./components/static-countdown"));
+const StaticDivider = dynamic(() => import("./components/static-divider"));
+const StaticAccordion = dynamic(() => import("./components/static-accordion"));
 
 import {
   StaticTwoEqualColumns,
@@ -96,6 +99,9 @@ const componentMap: Record<string, any> = {
   NewsArticleLayout: StaticNewsArticleLayout,
   NewsListPageWithData: StaticNewsListPage,
   CollaboratorsPage: StaticCollaboratorsPage,
+  Countdown: StaticCountdown,
+  Divider: StaticDivider,
+  AccordionComponent: StaticAccordion,
 };
 
 export function ComponentRenderer({ content }: { content: any }) {
